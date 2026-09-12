@@ -1,10 +1,16 @@
 ///|
 fn main {
   let rules =
+    #|// ===BEGIN ICANN DOMAINS===
     #|com
+    #|io
     #|co.uk
     #|*.ck
     #|!www.ck
+    #|// ===END ICANN DOMAINS===
+    #|// ===BEGIN PRIVATE DOMAINS===
+    #|github.io
+    #|// ===END PRIVATE DOMAINS===
   let suffixes = @moonsuffix.SuffixList::parse(rules).unwrap()
   println("MoonSuffix compiled \{suffixes.rule_count()} rules")
   for
@@ -24,4 +30,17 @@ fn main {
       }
     }
   }
+  let strict = suffixes
+    .lookup_with_options(
+      "user.github.io",
+      @moonsuffix.LookupOptions::strict_icann(),
+    )
+    .unwrap()
+  let strict_registrable = match strict.registrable_domain() {
+    Some(value) => value
+    None => "<none>"
+  }
+  println(
+    "strict ICANN user.github.io: suffix=\{strict.public_suffix()} registrable=\{strict_registrable}",
+  )
 }

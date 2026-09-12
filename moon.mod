@@ -1,4 +1,4 @@
-name = "ggbond44439/moonsuffix"
+name = "cn-wn/moonsuffix"
 
 version = "0.1.0"
 

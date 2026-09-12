@@ -23,6 +23,22 @@ fn official_semantics_fixture() -> SuffixList {
 }
 
 ///|
+fn sectioned_fixture() -> SuffixList {
+  SuffixList::parse(
+    (
+      #|// ===BEGIN ICANN DOMAINS===
+      #|com
+      #|io
+      #|// ===END ICANN DOMAINS===
+      #|// ===BEGIN PRIVATE DOMAINS===
+      #|github.io
+      #|// ===END PRIVATE DOMAINS===
+      #|
+    ),
+  ).unwrap()
+}
+
+///|
 test "parse comments whitespace and duplicate rules deterministically" {
   let suffixes = SuffixList::parse(
     (
@@ -45,6 +61,69 @@ test "reject malformed rule syntax and recover on the next parse" {
   assert_true(SuffixList::parse("!") is Err(_))
   let valid = SuffixList::parse("com").unwrap()
   assert_eq(valid.public_suffix("www.example.com").unwrap(), "com")
+}
+
+///|
+test "parse PSL section markers strictly and recover after errors" {
+  assert_true(
+    SuffixList::parse(
+      "// ===BEGIN ICANN DOMAINS===\ncom\n// ===END PRIVATE DOMAINS===",
+    )
+    is Err(_),
+  )
+  assert_true(
+    SuffixList::parse(
+      "// ===BEGIN ICANN DOMAINS===\n// ===BEGIN PRIVATE DOMAINS===",
+    )
+    is Err(_),
+  )
+  assert_true(
+    SuffixList::parse("// ===BEGIN PRIVATE DOMAINS===\ngithub.io") is Err(_),
+  )
+  let valid = sectioned_fixture()
+  assert_eq(valid.rule_count(), 3)
+}
+
+///|
+test "browser and ICANN-only scopes select different prevailing rules" {
+  let suffixes = sectioned_fixture()
+  let browser = suffixes.lookup("user.github.io").unwrap()
+  assert_eq(browser.public_suffix(), "github.io")
+  assert_eq(browser.registrable_domain(), Some("user.github.io"))
+  assert_eq(browser.rule_section(), Some(PrivateSection))
+  let icann = suffixes
+    .lookup_with_options(
+      "user.github.io",
+      LookupOptions::new(IcannOnly, UseDefaultWildcard),
+    )
+    .unwrap()
+  assert_eq(icann.public_suffix(), "io")
+  assert_eq(icann.registrable_domain(), Some("github.io"))
+  assert_eq(icann.rule_section(), Some(IcannSection))
+}
+
+///|
+test "strict policy rejects unknown suffixes while defaults remain compatible" {
+  let suffixes = sectioned_fixture()
+  assert_eq(suffixes.lookup("service.internal").unwrap().matched_rule(), "*")
+  assert_eq(suffixes.lookup("service.internal").unwrap().rule_section(), None)
+  assert_true(
+    suffixes.lookup_with_options(
+      "service.internal",
+      LookupOptions::strict_icann(),
+    )
+    is Err(UnlistedSuffix("service.internal")),
+  )
+}
+
+///|
+test "unsectioned custom rules stay eligible in ICANN-only mode" {
+  let suffixes = SuffixList::parse("internal").unwrap()
+  let result = suffixes
+    .lookup_with_options("api.service.internal", LookupOptions::strict_icann())
+    .unwrap()
+  assert_eq(result.public_suffix(), "internal")
+  assert_eq(result.rule_section(), Some(UnsectionedRule))
 }
 
 ///|

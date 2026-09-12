@@ -44,6 +44,31 @@ fn exact_rule_text(labels : Array[String], depth : Int) -> String {
 }
 
 ///|
+fn eligible_section(
+  sections : Array[RuleSection],
+  scope : SectionScope,
+) -> RuleSection? {
+  for section in sections {
+    if section == IcannSection {
+      return Some(IcannSection)
+    }
+  }
+  if scope == IcannAndPrivate {
+    for section in sections {
+      if section == PrivateSection {
+        return Some(PrivateSection)
+      }
+    }
+  }
+  for section in sections {
+    if section == UnsectionedRule {
+      return Some(UnsectionedRule)
+    }
+  }
+  None
+}
+
+///|
 /// Apply the PSL prevailing-rule algorithm to a hostname.
 ///
 /// This method performs case normalization, not IDNA conversion. The hostname
@@ -51,6 +76,21 @@ fn exact_rule_text(labels : Array[String], depth : Int) -> String {
 pub fn SuffixList::lookup(
   self : SuffixList,
   domain : String,
+) -> Result[Lookup, DomainError] {
+  self.lookup_with_options(domain, LookupOptions::browser_default())
+}
+
+///|
+/// Apply the PSL prevailing-rule algorithm with explicit section and
+/// unknown-suffix policies.
+///
+/// Unsectioned rules remain eligible in both scopes so compact and custom rule
+/// sets keep their expected behavior. This method performs case normalization,
+/// not IDNA conversion.
+pub fn SuffixList::lookup_with_options(
+  self : SuffixList,
+  domain : String,
+  options : LookupOptions,
 ) -> Result[Lookup, DomainError] {
   let (labels, trailing_dot, normalized_domain) = match parse_domain(domain) {
     Ok(value) => value
@@ -61,8 +101,10 @@ pub fn SuffixList::lookup(
   let mut best_length = 1
   let mut best_kind = DefaultRule
   let mut best_rule = "*"
+  let mut best_section : RuleSection? = None
   let mut exception_length = 0
   let mut exception_rule = ""
+  let mut exception_section : RuleSection? = None
   for i = labels.length() - 1; i >= 0; i = i - 1 {
     let next_index = match self.children[node_index].get(labels[i]) {
       Some(index) => index
@@ -70,25 +112,46 @@ pub fn SuffixList::lookup(
     }
     node_index = next_index
     depth = depth + 1
-    if self.exact[node_index] && depth >= best_length {
-      best_length = depth
-      best_kind = ExactRule
-      best_rule = exact_rule_text(labels, depth)
+    match eligible_section(self.exact_sections[node_index], options.scope) {
+      Some(section) =>
+        if depth >= best_length {
+          best_length = depth
+          best_kind = ExactRule
+          best_rule = exact_rule_text(labels, depth)
+          best_section = Some(section)
+        }
+      None => ()
     }
-    if self.wildcard[node_index] && i > 0 && depth + 1 > best_length {
-      best_length = depth + 1
-      best_kind = WildcardRule
-      best_rule = "*." + exact_rule_text(labels, depth)
+    match eligible_section(self.wildcard_sections[node_index], options.scope) {
+      Some(section) =>
+        if i > 0 && depth + 1 > best_length {
+          best_length = depth + 1
+          best_kind = WildcardRule
+          best_rule = "*." + exact_rule_text(labels, depth)
+          best_section = Some(section)
+        }
+      None => ()
     }
-    if self.exception[node_index] && depth > exception_length {
-      exception_length = depth
-      exception_rule = "!" + exact_rule_text(labels, depth)
+    match eligible_section(self.exception_sections[node_index], options.scope) {
+      Some(section) =>
+        if depth > exception_length {
+          exception_length = depth
+          exception_rule = "!" + exact_rule_text(labels, depth)
+          exception_section = Some(section)
+        }
+      None => ()
     }
   }
-  let (suffix_length, rule_kind, matched_rule) = if exception_length > 0 {
-    (exception_length - 1, ExceptionRule, exception_rule)
+  if best_kind == DefaultRule &&
+    exception_length == 0 &&
+    options.unknown_suffix == RequireListedSuffix {
+    return Err(UnlistedSuffix(normalized_domain))
+  }
+  let (suffix_length, rule_kind, matched_rule, rule_section) = if exception_length >
+    0 {
+    (exception_length - 1, ExceptionRule, exception_rule, exception_section)
   } else {
-    (best_length, best_kind, best_rule)
+    (best_length, best_kind, best_rule, best_section)
   }
   let public_suffix = joined_suffix(labels, suffix_length, trailing_dot)
   let registrable_domain = if labels.length() > suffix_length {
@@ -102,6 +165,7 @@ pub fn SuffixList::lookup(
     registrable_domain,
     matched_rule,
     rule_kind,
+    rule_section,
   })
 }
 

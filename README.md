@@ -8,9 +8,9 @@ answering two deceptively difficult questions about a hostname:
 
 It parses caller-supplied [Public Suffix List](https://publicsuffix.org/) text,
 implements exact, wildcard, exception, longest-rule, and implicit `*` behavior,
-and returns an explainable match. The reusable core has no file-system or
-network dependency and is designed for MoonBit's Wasm, Wasm-GC, and JavaScript
-targets.
+recognizes the official ICANN and PRIVATE sections, and returns an explainable
+match. The reusable core has no file-system or network dependency and is
+designed for MoonBit's Wasm, Wasm-GC, and JavaScript targets.
 
 ## Why this project exists
 
@@ -39,6 +39,16 @@ println(result.registrable_domain())  // Some(example.co.uk)
 println(result.matched_rule())        // co.uk
 ```
 
+Applications that must reject privately managed or unknown suffixes can select
+an explicit policy:
+
+```moonbit
+let result = suffixes.lookup_with_options(
+  "api.example.com",
+  LookupOptions::strict_icann(),
+).unwrap()
+```
+
 Run the included example:
 
 ```text
@@ -49,7 +59,10 @@ moon run cmd/main
 
 - `SuffixList::parse` compiles PSL text into a reverse-label trie.
 - `lookup` returns the case-normalized domain, public suffix, optional registrable
-  domain, prevailing rule, and rule kind.
+  domain, prevailing rule, rule kind, and source section. It keeps browser-style
+  behavior by considering both ICANN and PRIVATE rules and falling back to `*`.
+- `lookup_with_options` supports ICANN-only or all-section matching and either
+  an implicit wildcard or an error for unknown suffixes.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
   convenience queries.
 - Rules may be exact (`co.uk`), wildcard (`*.ck`), or exception (`!www.ck`).
@@ -63,19 +76,15 @@ moon run cmd/main
 - Inputs and list rules are lowercased, but MoonSuffix does not yet convert
   between Unicode U-labels and Punycode A-labels. Callers must canonicalize both
   to the same representation before parsing and lookup.
-- ICANN and PRIVATE section markers are currently treated alike. This matches
-  common browser-style lookups, but an ICANN-only policy is not implemented yet.
 - Callers must extract a hostname before lookup; URLs and IP literals are outside
   this API's input contract.
 
 ## Roadmap
 
-1. Add explicit ICANN-only/all-sections and require-listed/default-wildcard
-   policies.
-2. Add an adapter for the maintained MoonBit UTS #46 / IDNA implementation and
+1. Add an adapter for the maintained MoonBit UTS #46 / IDNA implementation and
    run the complete upstream Unicode/Punycode conformance cases.
-3. Add deterministic trie serialization and a reproducible snapshot generator.
-4. Add batch classification, update diffs, and Cookie/same-site integration
+2. Add deterministic trie serialization and a reproducible snapshot generator.
+3. Add batch classification, update diffs, and Cookie/same-site integration
    examples.
 
 ## Validation

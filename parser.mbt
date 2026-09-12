@@ -68,11 +68,12 @@ fn parse_rule_labels(
 ///|
 fn insert_rule(
   children : Array[Map[String, Int]],
-  exact : Array[Bool],
-  wildcard : Array[Bool],
-  exception : Array[Bool],
+  exact_sections : Array[Array[RuleSection]],
+  wildcard_sections : Array[Array[RuleSection]],
+  exception_sections : Array[Array[RuleSection]],
   labels : Array[String],
   kind : RuleKind,
+  section : RuleSection,
 ) -> Bool {
   let mut node_index = 0
   for i = labels.length() - 1; i >= 0; i = i - 1 {
@@ -82,38 +83,36 @@ fn insert_rule(
       None => {
         let index = children.length()
         children.push(Map([]))
-        exact.push(false)
-        wildcard.push(false)
-        exception.push(false)
+        exact_sections.push([])
+        wildcard_sections.push([])
+        exception_sections.push([])
         children[node_index].set(label, index)
         index
       }
     }
     node_index = next_index
   }
-  match kind {
-    ExactRule =>
-      if exact[node_index] {
-        false
-      } else {
-        exact[node_index] = true
-        true
-      }
-    WildcardRule =>
-      if wildcard[node_index] {
-        false
-      } else {
-        wildcard[node_index] = true
-        true
-      }
-    ExceptionRule =>
-      if exception[node_index] {
-        false
-      } else {
-        exception[node_index] = true
-        true
-      }
-    DefaultRule => false
+  let sections = match kind {
+    ExactRule => exact_sections[node_index]
+    WildcardRule => wildcard_sections[node_index]
+    ExceptionRule => exception_sections[node_index]
+    DefaultRule => return false
+  }
+  for existing in sections {
+    if existing == section {
+      return false
+    }
+  }
+  sections.push(section)
+  true
+}
+
+///|
+fn section_name(section : RuleSection) -> String {
+  match section {
+    UnsectionedRule => "unsectioned"
+    IcannSection => "ICANN"
+    PrivateSection => "PRIVATE"
   }
 }
 
@@ -124,18 +123,68 @@ fn insert_rule(
 /// whitespace, matching the PSL text format and allowing trailing comments.
 pub fn SuffixList::parse(source : String) -> Result[SuffixList, ListParseError] {
   let children : Array[Map[String, Int]] = [Map([])]
-  let exact = [false]
-  let wildcard = [false]
-  let exception = [false]
+  let exact_sections : Array[Array[RuleSection]] = [[]]
+  let wildcard_sections : Array[Array[RuleSection]] = [[]]
+  let exception_sections : Array[Array[RuleSection]] = [[]]
   let mut rule_count = 0
   let mut line_number = 0
+  let mut section = UnsectionedRule
   for raw_line in source.split("\n") {
     line_number = line_number + 1
     let trimmed = raw_line.trim()
+    let line = trimmed.to_owned()
+    if line == "// ===BEGIN ICANN DOMAINS===" {
+      if section != UnsectionedRule {
+        return Err(
+          InvalidRule(
+            line_number,
+            line,
+            "cannot begin ICANN section inside the \{section_name(section)} section",
+          ),
+        )
+      }
+      section = IcannSection
+      continue
+    }
+    if line == "// ===END ICANN DOMAINS===" {
+      if section != IcannSection {
+        return Err(
+          InvalidRule(
+            line_number, line, "ICANN end marker has no matching begin marker",
+          ),
+        )
+      }
+      section = UnsectionedRule
+      continue
+    }
+    if line == "// ===BEGIN PRIVATE DOMAINS===" {
+      if section != UnsectionedRule {
+        return Err(
+          InvalidRule(
+            line_number,
+            line,
+            "cannot begin PRIVATE section inside the \{section_name(section)} section",
+          ),
+        )
+      }
+      section = PrivateSection
+      continue
+    }
+    if line == "// ===END PRIVATE DOMAINS===" {
+      if section != PrivateSection {
+        return Err(
+          InvalidRule(
+            line_number, line, "PRIVATE end marker has no matching begin marker",
+          ),
+        )
+      }
+      section = UnsectionedRule
+      continue
+    }
     if trimmed.length() == 0 || trimmed.has_prefix("//") {
       continue
     }
-    let token = first_rule_field(trimmed.to_owned())
+    let token = first_rule_field(line)
     if token.length() == 0 {
       continue
     }
@@ -157,9 +206,27 @@ pub fn SuffixList::parse(source : String) -> Result[SuffixList, ListParseError] 
       Ok(labels) => labels
       Err(error) => return Err(error)
     }
-    if insert_rule(children, exact, wildcard, exception, labels, kind) {
+    if insert_rule(
+        children, exact_sections, wildcard_sections, exception_sections, labels,
+        kind, section,
+      ) {
       rule_count = rule_count + 1
     }
   }
-  Ok({ children, exact, wildcard, exception, rule_count_: rule_count, })
+  if section != UnsectionedRule {
+    return Err(
+      InvalidRule(
+        line_number,
+        "<end of input>",
+        "unterminated \{section_name(section)} section",
+      ),
+    )
+  }
+  Ok({
+    children,
+    exact_sections,
+    wildcard_sections,
+    exception_sections,
+    rule_count_: rule_count,
+  })
 }

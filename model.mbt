@@ -8,6 +8,69 @@ pub(all) enum RuleKind {
 } derive(Eq, Debug)
 
 ///|
+/// The PSL source section that supplied a prevailing rule.
+pub(all) enum RuleSection {
+  UnsectionedRule
+  IcannSection
+  PrivateSection
+} derive(Eq, Debug)
+
+///|
+/// The PSL sections eligible for a lookup.
+pub(all) enum SectionScope {
+  IcannAndPrivate
+  IcannOnly
+} derive(Eq, Debug)
+
+///|
+/// The behavior used when no eligible explicit rule matches a hostname.
+pub(all) enum UnknownSuffixPolicy {
+  UseDefaultWildcard
+  RequireListedSuffix
+} derive(Eq, Debug)
+
+///|
+/// Explicit policy controls for a public-suffix lookup.
+pub struct LookupOptions {
+  scope : SectionScope
+  unknown_suffix : UnknownSuffixPolicy
+}
+
+///|
+/// Construct lookup options from an eligible-section scope and unknown-suffix
+/// policy.
+pub fn LookupOptions::new(
+  scope : SectionScope,
+  unknown_suffix : UnknownSuffixPolicy,
+) -> LookupOptions {
+  { scope, unknown_suffix, }
+}
+
+///|
+/// Return browser-style defaults: ICANN and PRIVATE rules plus implicit `*`.
+pub fn LookupOptions::browser_default() -> LookupOptions {
+  { scope: IcannAndPrivate, unknown_suffix: UseDefaultWildcard, }
+}
+
+///|
+/// Return a conservative policy that accepts only listed ICANN suffixes.
+pub fn LookupOptions::strict_icann() -> LookupOptions {
+  { scope: IcannOnly, unknown_suffix: RequireListedSuffix, }
+}
+
+///|
+pub fn LookupOptions::section_scope(self : LookupOptions) -> SectionScope {
+  self.scope
+}
+
+///|
+pub fn LookupOptions::unknown_suffix_policy(
+  self : LookupOptions,
+) -> UnknownSuffixPolicy {
+  self.unknown_suffix
+}
+
+///|
 /// An explainable public-suffix lookup result.
 ///
 /// `normalized_domain` is case-normalized only. Callers are responsible for
@@ -18,6 +81,7 @@ pub struct Lookup {
   registrable_domain : String?
   matched_rule : String
   rule_kind : RuleKind
+  rule_section : RuleSection?
 }
 
 ///|
@@ -51,6 +115,13 @@ pub fn Lookup::rule_kind(self : Lookup) -> RuleKind {
 }
 
 ///|
+/// Return the source section of the prevailing explicit rule. The implicit
+/// default wildcard has no source section.
+pub fn Lookup::rule_section(self : Lookup) -> RuleSection? {
+  self.rule_section
+}
+
+///|
 /// A malformed rule in caller-supplied PSL text.
 pub(all) enum ListParseError {
   InvalidRule(Int, String, String)
@@ -70,6 +141,7 @@ pub(all) enum DomainError {
   EmptyDomain
   EmptyLabel(Int)
   InvalidDomainCharacter(Int, Char)
+  UnlistedSuffix(String)
 } derive(Eq, Debug)
 
 ///|
@@ -79,6 +151,8 @@ pub fn DomainError::message(self : DomainError) -> String {
     EmptyLabel(index) => "domain contains an empty label at index \{index}"
     InvalidDomainCharacter(index, character) =>
       "domain label \{index} contains invalid character '\{character}'"
+    UnlistedSuffix(domain) =>
+      "domain '\{domain}' has no suffix listed by the selected policy"
   }
 }
 
@@ -86,9 +160,9 @@ pub fn DomainError::message(self : DomainError) -> String {
 /// A compiled, immutable-by-API Public Suffix List rule set.
 pub struct SuffixList {
   children : Array[Map[String, Int]]
-  exact : Array[Bool]
-  wildcard : Array[Bool]
-  exception : Array[Bool]
+  exact_sections : Array[Array[RuleSection]]
+  wildcard_sections : Array[Array[RuleSection]]
+  exception_sections : Array[Array[RuleSection]]
   rule_count_ : Int
 }
 
