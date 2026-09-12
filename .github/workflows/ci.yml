@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Format, interfaces, and portable tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        uses: hustcer/setup-moonbit@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Show toolchain version
+        run: moon version --all
+
+      - name: Verify formatting
+        run: |
+          moon fmt
+          git diff --exit-code
+
+      - name: Verify generated interfaces
+        run: |
+          moon info
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+      - name: Check Wasm
+        run: moon check --target wasm --deny-warn
+
+      - name: Test Wasm
+        run: moon test --target wasm --deny-warn
+
+      - name: Test Wasm-GC
+        run: moon test --target wasm-gc --deny-warn
+
+      - name: Test JavaScript
+        run: moon test --target js --deny-warn
+
+      - name: Run documented example
+        run: moon run cmd/main

@@ -1,0 +1,62 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ggbond44439/moonsuffix"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum DomainError {
+  EmptyDomain
+  EmptyLabel(Int)
+  InvalidDomainCharacter(Int, Char)
+} derive(Eq, @debug.Debug)
+pub fn DomainError::message(Self) -> String
+
+pub(all) enum ListParseError {
+  InvalidRule(Int, String, String)
+} derive(Eq, @debug.Debug)
+pub fn ListParseError::message(Self) -> String
+
+pub struct Lookup {
+  normalized_domain : String
+  public_suffix : String
+  registrable_domain : String?
+  matched_rule : String
+  rule_kind : RuleKind
+}
+pub fn Lookup::matched_rule(Self) -> String
+pub fn Lookup::normalized_domain(Self) -> String
+pub fn Lookup::public_suffix(Self) -> String
+pub fn Lookup::registrable_domain(Self) -> String?
+pub fn Lookup::rule_kind(Self) -> RuleKind
+
+pub(all) enum RuleKind {
+  DefaultRule
+  ExactRule
+  WildcardRule
+  ExceptionRule
+} derive(Eq, @debug.Debug)
+
+pub struct SuffixList {
+  children : Array[Map[String, Int]]
+  exact : Array[Bool]
+  wildcard : Array[Bool]
+  exception : Array[Bool]
+  rule_count_ : Int
+}
+pub fn SuffixList::is_public_suffix(Self, String) -> Result[Bool, DomainError]
+pub fn SuffixList::lookup(Self, String) -> Result[Lookup, DomainError]
+pub fn SuffixList::node_count(Self) -> Int
+pub fn SuffixList::parse(String) -> Result[Self, ListParseError]
+pub fn SuffixList::public_suffix(Self, String) -> Result[String, DomainError]
+pub fn SuffixList::registrable_domain(Self, String) -> Result[String?, DomainError]
+pub fn SuffixList::rule_count(Self) -> Int
+
+// Type aliases
+
+// Traits
