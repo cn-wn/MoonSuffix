@@ -45,6 +45,20 @@ Rules outside official section markers remain eligible in either scope so small
 synthetic and application-owned lists do not silently stop working. A result
 reports the selected rule's section; the implicit wildcard reports no section.
 
+## Deterministic serialization
+
+`to_psl_text` walks the private trie, groups rules by source section, and sorts
+each group lexicographically. It emits unsectioned rules first, followed by
+official ICANN and PRIVATE marker blocks, with one trailing newline for every
+non-empty result. Parsing that text and serializing it again produces identical
+bytes and preserves lookup behavior.
+
+The canonical form preserves rule and section semantics, not source formatting:
+comments, blank lines, trailing fields, duplicate rules within one section, and
+the original ordering are intentionally discarded. Snapshot metadata such as an
+upstream revision or digest remains a future tooling layer rather than being
+invented by the core serializer.
+
 ## Why the data is injected
 
 The authoritative list changes several times per week and is separately

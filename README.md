@@ -45,7 +45,7 @@ an explicit policy:
 ```moonbit
 let result = suffixes.lookup_with_options(
   "api.example.com",
-  LookupOptions::strict_icann(),
+  @moonsuffix.LookupOptions::strict_icann(),
 ).unwrap()
 ```
 
@@ -63,6 +63,8 @@ moon run cmd/main
   behavior by considering both ICANN and PRIVATE rules and falling back to `*`.
 - `lookup_with_options` supports ICANN-only or all-section matching and either
   an implicit wildcard or an error for unknown suffixes.
+- `to_psl_text` exports a deterministic, parseable representation for pinned
+  snapshots, hashing, and reproducible builds.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
   convenience queries.
 - Rules may be exact (`co.uk`), wildcard (`*.ck`), or exception (`!www.ck`).
@@ -83,7 +85,8 @@ moon run cmd/main
 
 1. Add an adapter for the maintained MoonBit UTS #46 / IDNA implementation and
    run the complete upstream Unicode/Punycode conformance cases.
-2. Add deterministic trie serialization and a reproducible snapshot generator.
+2. Add a reproducible snapshot generator with upstream revision and digest
+   metadata.
 3. Add batch classification, update diffs, and Cookie/same-site integration
    examples.
 

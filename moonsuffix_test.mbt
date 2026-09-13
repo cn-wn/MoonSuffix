@@ -127,6 +127,104 @@ test "unsectioned custom rules stay eligible in ICANN-only mode" {
 }
 
 ///|
+test "serialize PSL text in a stable canonical order" {
+  let suffixes = SuffixList::parse(
+    (
+      #|z.local trailing-field
+      #|*.local
+      #|z.local
+      #|// ===BEGIN ICANN DOMAINS===
+      #|org
+      #|com
+      #|*.kobe.jp
+      #|!city.kobe.jp
+      #|// ===END ICANN DOMAINS===
+      #|// ===BEGIN PRIVATE DOMAINS===
+      #|github.io
+      #|blogspot.com
+      #|// ===END PRIVATE DOMAINS===
+      #|
+    ),
+  ).unwrap()
+  assert_eq(
+    suffixes.to_psl_text(),
+    (
+      #|*.local
+      #|z.local
+      #|
+      #|// ===BEGIN ICANN DOMAINS===
+      #|!city.kobe.jp
+      #|*.kobe.jp
+      #|com
+      #|org
+      #|// ===END ICANN DOMAINS===
+      #|
+      #|// ===BEGIN PRIVATE DOMAINS===
+      #|blogspot.com
+      #|github.io
+      #|// ===END PRIVATE DOMAINS===
+      #|
+    ),
+  )
+  let reordered = SuffixList::parse(
+    (
+      #|*.local
+      #|z.local
+      #|// ===BEGIN ICANN DOMAINS===
+      #|!city.kobe.jp
+      #|*.kobe.jp
+      #|com
+      #|org
+      #|// ===END ICANN DOMAINS===
+      #|// ===BEGIN PRIVATE DOMAINS===
+      #|blogspot.com
+      #|github.io
+      #|// ===END PRIVATE DOMAINS===
+      #|
+    ),
+  ).unwrap()
+  assert_eq(reordered.to_psl_text(), suffixes.to_psl_text())
+}
+
+///|
+test "serialized rule sets round trip without semantic or byte drift" {
+  let original = SuffixList::parse(
+    (
+      #|custom
+      #|// ===BEGIN ICANN DOMAINS===
+      #|com
+      #|*.ck
+      #|!www.ck
+      #|// ===END ICANN DOMAINS===
+      #|// ===BEGIN PRIVATE DOMAINS===
+      #|com
+      #|github.io
+      #|// ===END PRIVATE DOMAINS===
+      #|
+    ),
+  ).unwrap()
+  let canonical = original.to_psl_text()
+  let restored = SuffixList::parse(canonical).unwrap()
+  assert_eq(restored.rule_count(), original.rule_count())
+  assert_eq(restored.to_psl_text(), canonical)
+  for domain in ["api.custom", "www.www.ck", "user.github.io", "unknown"] {
+    let before = original.lookup(domain).unwrap()
+    let after = restored.lookup(domain).unwrap()
+    assert_eq(after.public_suffix(), before.public_suffix())
+    assert_eq(after.registrable_domain(), before.registrable_domain())
+    assert_eq(after.matched_rule(), before.matched_rule())
+    assert_eq(after.rule_section(), before.rule_section())
+  }
+}
+
+///|
+test "empty rule sets serialize and round trip as empty text" {
+  let empty = SuffixList::parse("").unwrap()
+  assert_eq(empty.to_psl_text(), "")
+  assert_eq(SuffixList::parse(empty.to_psl_text()).unwrap().rule_count(), 0)
+}
+
+///|
 test "implicit wildcard handles unlisted suffixes" {
   let suffixes = official_semantics_fixture()
   let one = suffixes.lookup("example").unwrap()

@@ -81,6 +81,7 @@ pub fn SuffixList::parse(String) -> Result[Self, ListParseError]
 pub fn SuffixList::public_suffix(Self, String) -> Result[String, DomainError]
 pub fn SuffixList::registrable_domain(Self, String) -> Result[String?, DomainError]
 pub fn SuffixList::rule_count(Self) -> Int
+pub fn SuffixList::to_psl_text(Self) -> String
 
 pub(all) enum UnknownSuffixPolicy {
   UseDefaultWildcard

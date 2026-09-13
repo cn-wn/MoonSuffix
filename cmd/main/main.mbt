@@ -43,4 +43,5 @@ fn main {
   println(
     "strict ICANN user.github.io: suffix=\{strict.public_suffix()} registrable=\{strict_registrable}",
   )
+  println("canonical PSL:\n\{suffixes.to_psl_text()}")
 }
