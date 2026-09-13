@@ -366,6 +366,52 @@ test "multi-section membership changes are not misreported as moves" {
 }
 
 ///|
+test "batch lookup preserves order and recovers after row errors" {
+  let suffixes = sectioned_fixture()
+  let report = suffixes.lookup_batch_with_options(
+    ["WWW.Example.COM.", "a..com", "service.internal", "bad,\" domain"],
+    LookupOptions::strict_icann(),
+  )
+  assert_eq(report.length(), 4)
+  assert_eq(report.success_count(), 1)
+  assert_eq(report.error_count(), 3)
+  let items = report.items()
+  assert_eq(items[0].index(), 0)
+  assert_eq(items[0].input(), "WWW.Example.COM.")
+  match items[0].result() {
+    Ok(result) => {
+      assert_eq(result.normalized_domain(), "www.example.com.")
+      assert_eq(result.public_suffix(), "com.")
+    }
+    Err(_) => fail("first batch row should succeed")
+  }
+  assert_true(items[1].result() is Err(EmptyLabel(1)))
+  assert_true(items[2].result() is Err(UnlistedSuffix("service.internal")))
+  assert_true(items[3].result() is Err(InvalidDomainCharacter(0, ' ')))
+  assert_eq(
+    report.to_csv(),
+    (
+      #|"index","input","status","normalized_domain","public_suffix","registrable_domain","matched_rule","rule_kind","rule_section","error"
+      #|"0","WWW.Example.COM.","ok","www.example.com.","com.","example.com.","com","exact","ICANN",""
+      #|"1","a..com","error","","","","","","","domain contains an empty label at index 1"
+      #|"2","service.internal","error","","","","","","","domain 'service.internal' has no suffix listed by the selected policy"
+      #|"3","bad,"" domain","error","","","","","","","domain label 0 contains invalid character ' '"
+      #|
+    ),
+  )
+}
+
+///|
+test "browser-default batch keeps unknown suffix behavior" {
+  let report = sectioned_fixture().lookup_batch(["service.internal"])
+  assert_eq(report.success_count(), 1)
+  match report.items()[0].result() {
+    Ok(result) => assert_eq(result.matched_rule(), "*")
+    Err(_) => fail("browser-default batch row should succeed")
+  }
+}
+
+///|
 test "implicit wildcard handles unlisted suffixes" {
   let suffixes = official_semantics_fixture()
   let one = suffixes.lookup("example").unwrap()

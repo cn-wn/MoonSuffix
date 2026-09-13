@@ -83,6 +83,20 @@ The comparison is semantic at the rule-set level. It does not claim that every
 reported rule change affects a particular hostname; callers can combine the
 report with lookup tests for their own domain inventory.
 
+## Batch classification
+
+Batch lookup preserves source order and duplicates. Each `BatchItem` contains
+its zero-based input index, original text, and either a normal `Lookup` or the
+same `DomainError` returned by single lookup. One malformed hostname therefore
+does not discard valid rows before or after it, and summary counts make partial
+failure visible.
+
+`BatchReport::to_csv` emits a fixed schema with LF line endings and a trailing
+newline. Every field uses RFC 4180-style quoting and embedded quotes are doubled,
+so original inputs and diagnostic text containing commas, quotes, CR, or LF stay
+inside one CSV field. Rows are never sorted: deterministic output follows the
+caller's input order.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map

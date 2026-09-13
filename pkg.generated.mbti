@@ -10,6 +10,26 @@ import {
 // Errors
 
 // Types and methods
+pub struct BatchItem {
+  index_ : Int
+  input_ : String
+  result_ : Result[Lookup, DomainError]
+}
+pub fn BatchItem::index(Self) -> Int
+pub fn BatchItem::input(Self) -> String
+pub fn BatchItem::result(Self) -> Result[Lookup, DomainError]
+
+pub struct BatchReport {
+  items_ : ReadOnlyArray[BatchItem]
+  success_count_ : Int
+  error_count_ : Int
+}
+pub fn BatchReport::error_count(Self) -> Int
+pub fn BatchReport::items(Self) -> ReadOnlyArray[BatchItem]
+pub fn BatchReport::length(Self) -> Int
+pub fn BatchReport::success_count(Self) -> Int
+pub fn BatchReport::to_csv(Self) -> String
+
 pub(all) enum DomainError {
   EmptyDomain
   EmptyLabel(Int)
@@ -115,6 +135,8 @@ pub struct SuffixList {
 }
 pub fn SuffixList::is_public_suffix(Self, String) -> Result[Bool, DomainError]
 pub fn SuffixList::lookup(Self, String) -> Result[Lookup, DomainError]
+pub fn SuffixList::lookup_batch(Self, Array[String]) -> BatchReport
+pub fn SuffixList::lookup_batch_with_options(Self, Array[String], LookupOptions) -> BatchReport
 pub fn SuffixList::lookup_with_options(Self, String, LookupOptions) -> Result[Lookup, DomainError]
 pub fn SuffixList::node_count(Self) -> Int
 pub fn SuffixList::parse(String) -> Result[Self, ListParseError]
