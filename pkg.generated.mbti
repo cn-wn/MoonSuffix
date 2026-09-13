@@ -72,11 +72,39 @@ pub struct Snapshot {
   sha256_ : String
   rule_count_ : Int
 }
+pub fn Snapshot::diff(Self, Self) -> SnapshotDiff
 pub fn Snapshot::manifest_text(Self) -> String
 pub fn Snapshot::psl_text(Self) -> String
 pub fn Snapshot::rule_count(Self) -> Int
 pub fn Snapshot::sha256(Self) -> String
 pub fn Snapshot::source_revision(Self) -> String
+
+pub(all) enum SnapshotChange {
+  AddedRule(String, RuleSection)
+  RemovedRule(String, RuleSection)
+  MovedRule(String, RuleSection, RuleSection)
+} derive(Eq, @debug.Debug)
+
+pub struct SnapshotDiff {
+  from_revision_ : String
+  to_revision_ : String
+  from_sha256_ : String
+  to_sha256_ : String
+  changes_ : ReadOnlyArray[SnapshotChange]
+  added_count_ : Int
+  removed_count_ : Int
+  moved_count_ : Int
+}
+pub fn SnapshotDiff::added_count(Self) -> Int
+pub fn SnapshotDiff::changes(Self) -> ReadOnlyArray[SnapshotChange]
+pub fn SnapshotDiff::from_revision(Self) -> String
+pub fn SnapshotDiff::from_sha256(Self) -> String
+pub fn SnapshotDiff::is_empty(Self) -> Bool
+pub fn SnapshotDiff::moved_count(Self) -> Int
+pub fn SnapshotDiff::removed_count(Self) -> Int
+pub fn SnapshotDiff::report_text(Self) -> String
+pub fn SnapshotDiff::to_revision(Self) -> String
+pub fn SnapshotDiff::to_sha256(Self) -> String
 
 pub struct SuffixList {
   children : Array[Map[String, Int]]

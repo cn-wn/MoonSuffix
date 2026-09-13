@@ -67,6 +67,8 @@ moon run cmd/main
   snapshots, hashing, and reproducible builds.
 - `snapshot` binds canonical PSL text to an opaque source revision, a SHA-256
   digest, its rule count, and a deterministic line-oriented manifest.
+- `Snapshot::diff` produces deterministic additions, removals, and unambiguous
+  ICANN/PRIVATE section moves between two snapshots.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
   convenience queries.
 - Rules may be exact (`co.uk`), wildcard (`*.ck`), or exception (`!www.ck`).
@@ -89,8 +91,7 @@ moon run cmd/main
 
 1. Add an adapter for the maintained MoonBit UTS #46 / IDNA implementation and
    run the complete upstream Unicode/Punycode conformance cases.
-2. Add batch classification, update diffs, and Cookie/same-site integration
-   examples.
+2. Add batch classification and Cookie/same-site integration examples.
 
 ## Validation
 

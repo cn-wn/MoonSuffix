@@ -257,6 +257,115 @@ test "snapshot digest changes when canonical rules change" {
 }
 
 ///|
+test "snapshot diff classifies additions removals and section moves" {
+  let before = SuffixList::parse(
+      (
+        #|local
+        #|// ===BEGIN ICANN DOMAINS===
+        #|com
+        #|org
+        #|// ===END ICANN DOMAINS===
+        #|// ===BEGIN PRIVATE DOMAINS===
+        #|github.io
+        #|old.private
+        #|// ===END PRIVATE DOMAINS===
+        #|
+      ),
+    )
+    .unwrap()
+    .snapshot("v1")
+  let after = SuffixList::parse(
+      (
+        #|local
+        #|// ===BEGIN ICANN DOMAINS===
+        #|com
+        #|github.io
+        #|net
+        #|// ===END ICANN DOMAINS===
+        #|// ===BEGIN PRIVATE DOMAINS===
+        #|new.private
+        #|// ===END PRIVATE DOMAINS===
+        #|
+      ),
+    )
+    .unwrap()
+    .snapshot("v2 candidate")
+  let diff = before.diff(after)
+  assert_eq(diff.from_revision(), "v1")
+  assert_eq(diff.to_revision(), "v2 candidate")
+  assert_eq(diff.from_sha256(), before.sha256())
+  assert_eq(diff.to_sha256(), after.sha256())
+  assert_eq(diff.added_count(), 2)
+  assert_eq(diff.removed_count(), 2)
+  assert_eq(diff.moved_count(), 1)
+  assert_eq(diff.is_empty(), false)
+  let changes = diff.changes()
+  assert_eq(changes.length(), 5)
+  assert_eq(changes[0], MovedRule("github.io", PrivateSection, IcannSection))
+  assert_eq(changes[1], AddedRule("net", IcannSection))
+  assert_eq(changes[2], AddedRule("new.private", PrivateSection))
+  assert_eq(changes[3], RemovedRule("old.private", PrivateSection))
+  assert_eq(changes[4], RemovedRule("org", IcannSection))
+  assert_eq(
+    diff.report_text(),
+    "format=moonsuffix-diff-v1\n" +
+    "from_revision=v1\n" +
+    "to_revision=v2%20candidate\n" +
+    "from_sha256=\{before.sha256()}\n" +
+    "to_sha256=\{after.sha256()}\n" +
+    "added=2\nremoved=2\nmoved=1\nchanges:\n" +
+    "> [PRIVATE->ICANN] github.io\n" +
+    "+ [ICANN] net\n" +
+    "+ [PRIVATE] new.private\n" +
+    "- [PRIVATE] old.private\n" +
+    "- [ICANN] org\n",
+  )
+}
+
+///|
+test "identical canonical snapshots have an empty semantic diff" {
+  let rules = SuffixList::parse("com\norg").unwrap()
+  let diff = rules.snapshot("old").diff(rules.snapshot("new"))
+  assert_eq(diff.is_empty(), true)
+  assert_eq(diff.changes().length(), 0)
+  assert_eq(diff.added_count(), 0)
+  assert_eq(diff.removed_count(), 0)
+  assert_eq(diff.moved_count(), 0)
+}
+
+///|
+test "multi-section membership changes are not misreported as moves" {
+  let before = SuffixList::parse(
+      (
+        #|// ===BEGIN ICANN DOMAINS===
+        #|com
+        #|// ===END ICANN DOMAINS===
+        #|// ===BEGIN PRIVATE DOMAINS===
+        #|com
+        #|// ===END PRIVATE DOMAINS===
+        #|
+      ),
+    )
+    .unwrap()
+    .snapshot("before")
+  let after = SuffixList::parse(
+      (
+        #|// ===BEGIN PRIVATE DOMAINS===
+        #|com
+        #|// ===END PRIVATE DOMAINS===
+        #|
+      ),
+    )
+    .unwrap()
+    .snapshot("after")
+  let diff = before.diff(after)
+  assert_eq(diff.changes().length(), 1)
+  assert_eq(diff.changes()[0], RemovedRule("com", IcannSection))
+  assert_eq(diff.removed_count(), 1)
+  assert_eq(diff.moved_count(), 0)
+}
+
+///|
 test "implicit wildcard handles unlisted suffixes" {
   let suffixes = official_semantics_fixture()
   let one = suffixes.lookup("example").unwrap()

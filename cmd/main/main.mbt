@@ -46,4 +46,18 @@ fn main {
   println("canonical PSL:\n\{suffixes.to_psl_text()}")
   let snapshot = suffixes.snapshot("example-rules-v1")
   println("snapshot manifest:\n\{snapshot.manifest_text()}")
+  let updated_rules =
+    #|// ===BEGIN ICANN DOMAINS===
+    #|com
+    #|io
+    #|net
+    #|co.uk
+    #|*.ck
+    #|!www.ck
+    #|github.io
+    #|// ===END ICANN DOMAINS===
+  let updated = @moonsuffix.SuffixList::parse(updated_rules)
+    .unwrap()
+    .snapshot("example-rules-v2")
+  println("snapshot diff:\n\{snapshot.diff(updated).report_text()}")
 }

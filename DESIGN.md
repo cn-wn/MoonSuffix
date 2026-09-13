@@ -70,6 +70,19 @@ the engine and data lifecycle separate: callers supply text and the snapshot API
 records their chosen revision and canonical digest without bundling upstream
 data.
 
+## Snapshot comparison
+
+`Snapshot::diff` compares canonical rule identities as `(rule, section)` pairs.
+It reports additions, removals, and a section move when one old membership is
+replaced by exactly one new membership for the same rule. Multi-section changes
+that could have more than one interpretation remain explicit additions and
+removals. Rules and memberships are emitted in a fixed order, so identical
+inputs produce byte-identical reports independent of hash-map iteration.
+
+The comparison is semantic at the rule-set level. It does not claim that every
+reported rule change affects a particular hostname; callers can combine the
+report with lookup tests for their own domain inventory.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map

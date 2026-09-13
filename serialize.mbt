@@ -83,12 +83,9 @@ fn compare_code_units(left : String, right : String) -> Int {
 }
 
 ///|
-/// Serialize the compiled rule set to deterministic, parseable PSL text.
-///
-/// Rules are lowercased and sorted lexicographically within their source
-/// section. Comments, blank lines, trailing fields, and original rule order are
-/// intentionally not retained. Non-empty output always ends in one newline.
-pub fn SuffixList::to_psl_text(self : SuffixList) -> String {
+fn SuffixList::sorted_rules_by_section(
+  self : SuffixList,
+) -> (Array[String], Array[String], Array[String]) {
   let unsectioned : Array[String] = []
   let icann : Array[String] = []
   let private_rules : Array[String] = []
@@ -96,6 +93,17 @@ pub fn SuffixList::to_psl_text(self : SuffixList) -> String {
   unsectioned.sort_by(compare_code_units)
   icann.sort_by(compare_code_units)
   private_rules.sort_by(compare_code_units)
+  (unsectioned, icann, private_rules)
+}
+
+///|
+/// Serialize the compiled rule set to deterministic, parseable PSL text.
+///
+/// Rules are lowercased and sorted lexicographically within their source
+/// section. Comments, blank lines, trailing fields, and original rule order are
+/// intentionally not retained. Non-empty output always ends in one newline.
+pub fn SuffixList::to_psl_text(self : SuffixList) -> String {
+  let (unsectioned, icann, private_rules) = self.sorted_rules_by_section()
   let blocks : Array[String] = []
   if unsectioned.length() > 0 {
     blocks.push(unsectioned.join("\n"))
