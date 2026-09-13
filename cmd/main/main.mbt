@@ -44,4 +44,6 @@ fn main {
     "strict ICANN user.github.io: suffix=\{strict.public_suffix()} registrable=\{strict_registrable}",
   )
   println("canonical PSL:\n\{suffixes.to_psl_text()}")
+  let snapshot = suffixes.snapshot("example-rules-v1")
+  println("snapshot manifest:\n\{snapshot.manifest_text()}")
 }

@@ -65,6 +65,8 @@ moon run cmd/main
   an implicit wildcard or an error for unknown suffixes.
 - `to_psl_text` exports a deterministic, parseable representation for pinned
   snapshots, hashing, and reproducible builds.
+- `snapshot` binds canonical PSL text to an opaque source revision, a SHA-256
+  digest, its rule count, and a deterministic line-oriented manifest.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
   convenience queries.
 - Rules may be exact (`co.uk`), wildcard (`*.ck`), or exception (`!www.ck`).
@@ -75,6 +77,8 @@ moon run cmd/main
 
 - No PSL snapshot is bundled. Applications inject a pinned or freshly fetched
   list, so data freshness and MPL-2.0 obligations remain explicit.
+- Snapshot revision labels are supplied by the caller. SHA-256 detects canonical
+  content changes but does not authenticate the source or fetch upstream data.
 - Inputs and list rules are lowercased, but MoonSuffix does not yet convert
   between Unicode U-labels and Punycode A-labels. Callers must canonicalize both
   to the same representation before parsing and lookup.
@@ -85,9 +89,7 @@ moon run cmd/main
 
 1. Add an adapter for the maintained MoonBit UTS #46 / IDNA implementation and
    run the complete upstream Unicode/Punycode conformance cases.
-2. Add a reproducible snapshot generator with upstream revision and digest
-   metadata.
-3. Add batch classification, update diffs, and Cookie/same-site integration
+2. Add batch classification, update diffs, and Cookie/same-site integration
    examples.
 
 ## Validation

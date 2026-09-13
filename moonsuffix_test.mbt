@@ -225,6 +225,38 @@ test "empty rule sets serialize and round trip as empty text" {
 }
 
 ///|
+test "snapshot binds canonical Unicode PSL bytes to provenance" {
+  let first = SuffixList::parse("公司.cn\ncom").unwrap()
+  let reordered = SuffixList::parse("com\n公司.cn").unwrap()
+  let snapshot = first.snapshot("release 2026/09")
+  assert_eq(snapshot.source_revision(), "release 2026/09")
+  assert_eq(snapshot.psl_text(), "com\n公司.cn\n")
+  assert_eq(snapshot.rule_count(), 2)
+  assert_eq(
+    snapshot.sha256(),
+    "9562f01cbb016548123eacc23538f909a6c383572887adc18cd8bb1009685e69",
+  )
+  assert_eq(reordered.snapshot("other").sha256(), snapshot.sha256())
+  assert_eq(
+    snapshot.manifest_text(),
+    (
+      #|format=moonsuffix-snapshot-v1
+      #|source_revision=release%202026%2f09
+      #|psl_sha256=9562f01cbb016548123eacc23538f909a6c383572887adc18cd8bb1009685e69
+      #|rule_count=2
+      #|
+    ),
+  )
+}
+
+///|
+test "snapshot digest changes when canonical rules change" {
+  let before = SuffixList::parse("com").unwrap().snapshot("same")
+  let after = SuffixList::parse("com\norg").unwrap().snapshot("same")
+  assert_true(before.sha256() != after.sha256())
+}
+
+///|
 test "implicit wildcard handles unlisted suffixes" {
   let suffixes = official_semantics_fixture()
   let one = suffixes.lookup("example").unwrap()

@@ -55,17 +55,20 @@ bytes and preserves lookup behavior.
 
 The canonical form preserves rule and section semantics, not source formatting:
 comments, blank lines, trailing fields, duplicate rules within one section, and
-the original ordering are intentionally discarded. Snapshot metadata such as an
-upstream revision or digest remains a future tooling layer rather than being
-invented by the core serializer.
+the original ordering are intentionally discarded. `snapshot` adds reproducible
+metadata by hashing the canonical text's UTF-8 bytes with SHA-256 and attaching
+an opaque caller-provided source revision and rule count. Its line-oriented
+manifest percent-encodes the revision, preventing embedded whitespace or
+delimiters from changing structure.
 
 ## Why the data is injected
 
 The authoritative list changes several times per week and is separately
 licensed under MPL-2.0. Embedding an unversioned snapshot would make freshness,
 reproducibility, and licensing less visible. The first release therefore keeps
-the engine and data lifecycle separate: callers supply text, while future
-tooling will pin the upstream revision and record its digest.
+the engine and data lifecycle separate: callers supply text and the snapshot API
+records their chosen revision and canonical digest without bundling upstream
+data.
 
 ## Complexity
 
