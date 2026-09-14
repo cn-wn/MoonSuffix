@@ -123,6 +123,22 @@ pub fn LookupOptions::section_scope(Self) -> SectionScope
 pub fn LookupOptions::strict_icann() -> Self
 pub fn LookupOptions::unknown_suffix_policy(Self) -> UnknownSuffixPolicy
 
+pub struct PolicyImpactReport {
+  before_options_ : LookupOptions
+  after_options_ : LookupOptions
+  scanned_count_ : Int
+  unchanged_count_ : Int
+  impacts_ : ReadOnlyArray[DomainImpact]
+}
+pub fn PolicyImpactReport::after_options(Self) -> LookupOptions
+pub fn PolicyImpactReport::before_options(Self) -> LookupOptions
+pub fn PolicyImpactReport::changed_count(Self) -> Int
+pub fn PolicyImpactReport::impacts(Self) -> ReadOnlyArray[DomainImpact]
+pub fn PolicyImpactReport::is_empty(Self) -> Bool
+pub fn PolicyImpactReport::scanned_count(Self) -> Int
+pub fn PolicyImpactReport::to_csv(Self) -> String
+pub fn PolicyImpactReport::unchanged_count(Self) -> Int
+
 pub(all) enum RuleKind {
   DefaultRule
   ExactRule
@@ -228,6 +244,7 @@ pub struct SuffixList {
   exception_sections : Array[Array[RuleSection]]
   rule_count_ : Int
 }
+pub fn SuffixList::analyze_policy_impact(Self, Array[String], LookupOptions, LookupOptions) -> PolicyImpactReport
 pub fn SuffixList::is_public_suffix(Self, String) -> Result[Bool, DomainError]
 pub fn SuffixList::lookup(Self, String) -> Result[Lookup, DomainError]
 pub fn SuffixList::lookup_batch(Self, Array[String]) -> BatchReport

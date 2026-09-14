@@ -199,13 +199,12 @@ fn append_lookup_fields(
 }
 
 ///|
-/// Export only changed rows as deterministic, fully quoted CSV.
-pub fn SnapshotImpact::to_csv(self : SnapshotImpact) -> String {
+fn domain_impacts_to_csv(impacts : ReadOnlyArray[DomainImpact]) -> String {
   let output = StringBuilder()
   output.write_string(
     "\"index\",\"input\",\"impact\",\"before_status\",\"before_normalized_domain\",\"before_public_suffix\",\"before_registrable_domain\",\"before_matched_rule\",\"before_rule_kind\",\"before_rule_section\",\"before_error\",\"after_status\",\"after_normalized_domain\",\"after_public_suffix\",\"after_registrable_domain\",\"after_matched_rule\",\"after_rule_kind\",\"after_rule_section\",\"after_error\"\n",
   )
-  for impact in self.impacts_ {
+  for impact in impacts {
     let fields = [
       impact.index_.to_string(),
       impact.input_,
@@ -216,4 +215,10 @@ pub fn SnapshotImpact::to_csv(self : SnapshotImpact) -> String {
     write_csv_row(output, fields)
   }
   output.to_string()
+}
+
+///|
+/// Export only changed rows as deterministic, fully quoted CSV.
+pub fn SnapshotImpact::to_csv(self : SnapshotImpact) -> String {
+  domain_impacts_to_csv(self.impacts_)
 }

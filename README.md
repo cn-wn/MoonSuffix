@@ -73,6 +73,8 @@ moon run cmd/main
   ICANN/PRIVATE section moves between two snapshots.
 - `Snapshot::analyze_impact` evaluates a hostname inventory against old and new
   snapshots, classifies only changed outcomes, and exports deterministic CSV.
+- `analyze_policy_impact` compares two lookup policies over one hostname
+  inventory, exposing domains affected by a stricter deployment policy.
 - `lookup_batch` and `lookup_batch_with_options` preserve input order and retain
   invalid hostnames as row-level errors; `BatchReport::to_csv` exports every row.
 - `site_key` and `same_registrable_site` expose canonical registrable-hostname

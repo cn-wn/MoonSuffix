@@ -577,6 +577,57 @@ test "snapshot impact preserves changed duplicates and handles empty input" {
 }
 
 ///|
+test "policy impact identifies strict ICANN migration changes" {
+  let suffixes = sectioned_fixture()
+  let report = suffixes.analyze_policy_impact(
+    [
+      "alice.github.io", "service.internal", "api.com", "bad..com", "alice.github.io",
+    ],
+    LookupOptions::browser_default(),
+    LookupOptions::strict_icann(),
+  )
+  assert_eq(report.before_options().section_scope(), IcannAndPrivate)
+  assert_eq(report.after_options().unknown_suffix_policy(), RequireListedSuffix)
+  assert_eq(report.scanned_count(), 5)
+  assert_eq(report.changed_count(), 3)
+  assert_eq(report.unchanged_count(), 2)
+  assert_eq(report.is_empty(), false)
+  let impacts = report.impacts()
+  assert_eq(impacts[0].index(), 0)
+  assert_eq(impacts[0].kind(), BoundaryChanged)
+  assert_eq(impacts[1].index(), 1)
+  assert_eq(impacts[1].kind(), BecameRejected)
+  assert_eq(impacts[2].index(), 4)
+  assert_eq(impacts[2].kind(), BoundaryChanged)
+  assert_true(
+    report.to_csv().contains("\"1\",\"service.internal\",\"became_rejected\""),
+  )
+  assert_eq(report.to_csv().contains("api.com"), false)
+  assert_eq(report.to_csv().contains("bad..com"), false)
+}
+
+///|
+test "policy impact records reverse acceptance and empty inventories" {
+  let suffixes = sectioned_fixture()
+  let reverse = suffixes.analyze_policy_impact(
+    ["service.internal"],
+    LookupOptions::strict_icann(),
+    LookupOptions::browser_default(),
+  )
+  assert_eq(reverse.changed_count(), 1)
+  assert_eq(reverse.impacts()[0].kind(), BecameAccepted)
+  let empty = suffixes.analyze_policy_impact(
+    [],
+    LookupOptions::browser_default(),
+    LookupOptions::strict_icann(),
+  )
+  assert_eq(empty.scanned_count(), 0)
+  assert_eq(empty.changed_count(), 0)
+  assert_eq(empty.unchanged_count(), 0)
+  assert_eq(empty.is_empty(), true)
+}
+
+///|
 test "site keys compare registrable hostname boundaries" {
   let suffixes = sectioned_fixture()
   assert_eq(suffixes.site_key("WWW.Example.COM."), Ok("example.com"))

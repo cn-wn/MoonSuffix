@@ -134,6 +134,15 @@ literal null input when null is expected, but retains those distinct actual
 outcomes when a case fails. Reports preserve source order and export only
 failures as fully quoted deterministic CSV.
 
+## Policy migration audit
+
+`analyze_policy_impact` evaluates the same ordered hostname inventory twice
+against one immutable rule set. This isolates policy effects from PSL data
+changes—for example, moving from browser defaults to listed ICANN suffixes
+only. It reuses the same acceptance, boundary, and rule-metadata categories as
+snapshot impact analysis, retains duplicates and original indexes, counts
+unchanged inputs, and exports only policy-sensitive rows as deterministic CSV.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map

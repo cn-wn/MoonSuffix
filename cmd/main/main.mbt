@@ -92,4 +92,12 @@ fn main {
   println(
     "conformance: \{conformance.passed_count()}/\{conformance.total_count()} passed",
   )
+  let policy_impact = suffixes.analyze_policy_impact(
+    ["user.github.io", "service.internal", "api.example.com"],
+    @moonsuffix.LookupOptions::browser_default(),
+    @moonsuffix.LookupOptions::strict_icann(),
+  )
+  println(
+    "strict-policy changes: \{policy_impact.changed_count()}/\{policy_impact.scanned_count()}",
+  )
 }
