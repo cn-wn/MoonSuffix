@@ -71,4 +71,8 @@ fn main {
     @moonsuffix.LookupOptions::strict_icann(),
   )
   println("batch CSV:\n\{audit.to_csv()}")
+  let related = suffixes
+    .same_registrable_site("www.example.com", "api.example.com.")
+    .unwrap()
+  println("same registrable site: \{related}")
 }

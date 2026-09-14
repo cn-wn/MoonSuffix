@@ -492,6 +492,55 @@ test "snapshot impact preserves changed duplicates and handles empty input" {
 }
 
 ///|
+test "site keys compare registrable hostname boundaries" {
+  let suffixes = sectioned_fixture()
+  assert_eq(suffixes.site_key("WWW.Example.COM."), Ok("example.com"))
+  assert_eq(
+    suffixes.same_registrable_site("www.example.com", "api.example.com."),
+    Ok(true),
+  )
+  assert_eq(
+    suffixes.same_registrable_site("www.example.com", "api.example.io"),
+    Ok(false),
+  )
+}
+
+///|
+test "private suffixes split sites unless policy excludes them" {
+  let suffixes = sectioned_fixture()
+  assert_eq(
+    suffixes.same_registrable_site("alice.github.io", "bob.github.io"),
+    Ok(false),
+  )
+  assert_eq(
+    suffixes.same_registrable_site_with_options(
+      "alice.github.io",
+      "bob.github.io",
+      LookupOptions::new(IcannOnly, UseDefaultWildcard),
+    ),
+    Ok(true),
+  )
+}
+
+///|
+test "site keys reject public suffixes invalid domains and strict unknowns" {
+  let suffixes = sectioned_fixture()
+  assert_eq(suffixes.site_key("com"), Err(NoRegistrableDomain("com")))
+  assert_eq(suffixes.site_key("a..com"), Err(InvalidSiteDomain(EmptyLabel(1))))
+  assert_eq(
+    suffixes.site_key_with_options(
+      "service.internal",
+      LookupOptions::strict_icann(),
+    ),
+    Err(InvalidSiteDomain(UnlistedSuffix("service.internal"))),
+  )
+  assert_eq(
+    SiteError::NoRegistrableDomain("com").message(),
+    "domain 'com' is a public suffix and has no registrable site",
+  )
+}
+
+///|
 test "implicit wildcard handles unlisted suffixes" {
   let suffixes = official_semantics_fixture()
   let one = suffixes.lookup("example").unwrap()

@@ -101,6 +101,21 @@ so original inputs and diagnostic text containing commas, quotes, CR, or LF stay
 inside one CSV field. Rows are never sorted: deterministic output follows the
 caller's input order.
 
+## Registrable site identity
+
+`site_key` turns a successful lookup into a comparison key by requiring a
+registrable domain and removing an optional trailing DNS root dot. Public
+suffixes alone are rejected because they do not identify one independently
+controlled site. The browser-style profile includes PRIVATE rules, so
+`alice.github.io` and `bob.github.io` remain distinct sites; explicit policy
+variants allow applications to choose a different boundary deliberately.
+
+`same_registrable_site` compares these keys and validates the left hostname
+first. It intentionally answers only the hostname portion of a site identity.
+Applications implementing schemeful same-site behavior must parse and compare
+URL schemes separately, and Cookie Domain acceptance requires additional RFC
+6265 domain-matching rules.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map

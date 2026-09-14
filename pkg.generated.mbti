@@ -106,6 +106,12 @@ pub(all) enum SectionScope {
   IcannOnly
 } derive(Eq, @debug.Debug)
 
+pub(all) enum SiteError {
+  InvalidSiteDomain(DomainError)
+  NoRegistrableDomain(String)
+} derive(Eq, @debug.Debug)
+pub fn SiteError::message(Self) -> String
+
 pub struct Snapshot {
   source_revision_ : String
   psl_text_ : String
@@ -184,6 +190,10 @@ pub fn SuffixList::parse(String) -> Result[Self, ListParseError]
 pub fn SuffixList::public_suffix(Self, String) -> Result[String, DomainError]
 pub fn SuffixList::registrable_domain(Self, String) -> Result[String?, DomainError]
 pub fn SuffixList::rule_count(Self) -> Int
+pub fn SuffixList::same_registrable_site(Self, String, String) -> Result[Bool, SiteError]
+pub fn SuffixList::same_registrable_site_with_options(Self, String, String, LookupOptions) -> Result[Bool, SiteError]
+pub fn SuffixList::site_key(Self, String) -> Result[String, SiteError]
+pub fn SuffixList::site_key_with_options(Self, String, LookupOptions) -> Result[String, SiteError]
 pub fn SuffixList::snapshot(Self, String) -> Snapshot
 pub fn SuffixList::to_psl_text(Self) -> String
 
