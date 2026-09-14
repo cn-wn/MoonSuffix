@@ -80,8 +80,12 @@ removals. Rules and memberships are emitted in a fixed order, so identical
 inputs produce byte-identical reports independent of hash-map iteration.
 
 The comparison is semantic at the rule-set level. It does not claim that every
-reported rule change affects a particular hostname; callers can combine the
-report with lookup tests for their own domain inventory.
+reported rule change affects a particular hostname. `Snapshot::analyze_impact`
+closes that gap by evaluating an inventory under the same lookup policy before
+and after an update. It classifies acceptance changes, public-suffix or
+registrable-boundary changes, and prevailing-rule metadata changes. Unchanged
+rows are counted but omitted; changed rows preserve the original order, index,
+and duplicates. Its fully quoted CSV includes both outcomes for auditability.
 
 ## Batch classification
 

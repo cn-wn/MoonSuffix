@@ -60,6 +60,12 @@ fn main {
     .unwrap()
     .snapshot("example-rules-v2")
   println("snapshot diff:\n\{snapshot.diff(updated).report_text()}")
+  let impact = snapshot.analyze_impact(
+    updated,
+    ["user.github.io", "api.net", "api.example.com"],
+    @moonsuffix.LookupOptions::strict_icann(),
+  )
+  println("snapshot impact CSV:\n\{impact.to_csv()}")
   let audit = suffixes.lookup_batch_with_options(
     ["api.example.com", "service.internal", "a..com"],
     @moonsuffix.LookupOptions::strict_icann(),

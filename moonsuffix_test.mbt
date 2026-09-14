@@ -412,6 +412,86 @@ test "browser-default batch keeps unknown suffix behavior" {
 }
 
 ///|
+test "snapshot impact reports only externally visible hostname changes" {
+  let before = SuffixList::parse(
+      (
+        #|meta
+        #|// ===BEGIN ICANN DOMAINS===
+        #|com
+        #|old
+        #|uk
+        #|// ===END ICANN DOMAINS===
+        #|
+      ),
+    )
+    .unwrap()
+    .snapshot("v1")
+  let after = SuffixList::parse(
+      (
+        #|// ===BEGIN ICANN DOMAINS===
+        #|com
+        #|new
+        #|co.uk
+        #|meta
+        #|// ===END ICANN DOMAINS===
+        #|
+      ),
+    )
+    .unwrap()
+    .snapshot("v2")
+  let report = before.analyze_impact(
+    after,
+    ["api.new", "api.old", "shop.example.co.uk", "api.meta", "api.com"],
+    LookupOptions::strict_icann(),
+  )
+  assert_eq(report.from_revision(), "v1")
+  assert_eq(report.to_revision(), "v2")
+  assert_eq(report.from_sha256(), before.sha256())
+  assert_eq(report.to_sha256(), after.sha256())
+  assert_eq(report.scanned_count(), 5)
+  assert_eq(report.changed_count(), 4)
+  assert_eq(report.unchanged_count(), 1)
+  assert_eq(report.is_empty(), false)
+  let impacts = report.impacts()
+  assert_eq(impacts[0].index(), 0)
+  assert_eq(impacts[0].input(), "api.new")
+  assert_eq(impacts[0].kind(), BecameAccepted)
+  assert_true(impacts[0].before() is Err(UnlistedSuffix("api.new")))
+  assert_true(impacts[0].after() is Ok(_))
+  assert_eq(impacts[1].kind(), BecameRejected)
+  assert_eq(impacts[2].kind(), BoundaryChanged)
+  assert_eq(impacts[3].kind(), RuleMetadataChanged)
+  assert_true(report.to_csv().contains("\"0\",\"api.new\",\"became_accepted\""))
+  assert_true(
+    report.to_csv().contains("\"3\",\"api.meta\",\"rule_metadata_changed\""),
+  )
+  assert_eq(report.to_csv().contains("api.com"), false)
+}
+
+///|
+test "snapshot impact preserves changed duplicates and handles empty input" {
+  let before = SuffixList::parse("com").unwrap().snapshot("before")
+  let after = SuffixList::parse("com\nnet").unwrap().snapshot("after")
+  let duplicates = before.analyze_impact(
+    after,
+    ["api.net", "api.net"],
+    LookupOptions::strict_icann(),
+  )
+  assert_eq(duplicates.changed_count(), 2)
+  assert_eq(duplicates.impacts()[0].index(), 0)
+  assert_eq(duplicates.impacts()[1].index(), 1)
+  let empty = before.analyze_impact(after, [], LookupOptions::strict_icann())
+  assert_eq(empty.scanned_count(), 0)
+  assert_eq(empty.changed_count(), 0)
+  assert_eq(empty.unchanged_count(), 0)
+  assert_eq(empty.is_empty(), true)
+  assert_eq(
+    empty.to_csv(),
+    "\"index\",\"input\",\"impact\",\"before_status\",\"before_normalized_domain\",\"before_public_suffix\",\"before_registrable_domain\",\"before_matched_rule\",\"before_rule_kind\",\"before_rule_section\",\"before_error\",\"after_status\",\"after_normalized_domain\",\"after_public_suffix\",\"after_registrable_domain\",\"after_matched_rule\",\"after_rule_kind\",\"after_rule_section\",\"after_error\"\n",
+  )
+}
+
+///|
 test "implicit wildcard handles unlisted suffixes" {
   let suffixes = official_semantics_fixture()
   let one = suffixes.lookup("example").unwrap()

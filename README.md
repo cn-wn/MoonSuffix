@@ -69,6 +69,8 @@ moon run cmd/main
   digest, its rule count, and a deterministic line-oriented manifest.
 - `Snapshot::diff` produces deterministic additions, removals, and unambiguous
   ICANN/PRIVATE section moves between two snapshots.
+- `Snapshot::analyze_impact` evaluates a hostname inventory against old and new
+  snapshots, classifies only changed outcomes, and exports deterministic CSV.
 - `lookup_batch` and `lookup_batch_with_options` preserve input order and retain
   invalid hostnames as row-level errors; `BatchReport::to_csv` exports every row.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
@@ -93,8 +95,7 @@ moon run cmd/main
 
 1. Add an adapter for the maintained MoonBit UTS #46 / IDNA implementation and
    run the complete upstream Unicode/Punycode conformance cases.
-2. Add Cookie/same-site integration examples and snapshot impact analysis for a
-   hostname inventory.
+2. Add Cookie/same-site integration examples.
 
 ## Validation
 

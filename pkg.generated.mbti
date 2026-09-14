@@ -38,6 +38,26 @@ pub(all) enum DomainError {
 } derive(Eq, @debug.Debug)
 pub fn DomainError::message(Self) -> String
 
+pub struct DomainImpact {
+  index_ : Int
+  input_ : String
+  kind_ : ImpactKind
+  before_ : Result[Lookup, DomainError]
+  after_ : Result[Lookup, DomainError]
+}
+pub fn DomainImpact::after(Self) -> Result[Lookup, DomainError]
+pub fn DomainImpact::before(Self) -> Result[Lookup, DomainError]
+pub fn DomainImpact::index(Self) -> Int
+pub fn DomainImpact::input(Self) -> String
+pub fn DomainImpact::kind(Self) -> ImpactKind
+
+pub(all) enum ImpactKind {
+  BecameAccepted
+  BecameRejected
+  BoundaryChanged
+  RuleMetadataChanged
+} derive(Eq, @debug.Debug)
+
 pub(all) enum ListParseError {
   InvalidRule(Int, String, String)
 } derive(Eq, @debug.Debug)
@@ -92,6 +112,7 @@ pub struct Snapshot {
   sha256_ : String
   rule_count_ : Int
 }
+pub fn Snapshot::analyze_impact(Self, Self, Array[String], LookupOptions) -> SnapshotImpact
 pub fn Snapshot::diff(Self, Self) -> SnapshotDiff
 pub fn Snapshot::manifest_text(Self) -> String
 pub fn Snapshot::psl_text(Self) -> String
@@ -125,6 +146,26 @@ pub fn SnapshotDiff::removed_count(Self) -> Int
 pub fn SnapshotDiff::report_text(Self) -> String
 pub fn SnapshotDiff::to_revision(Self) -> String
 pub fn SnapshotDiff::to_sha256(Self) -> String
+
+pub struct SnapshotImpact {
+  from_revision_ : String
+  to_revision_ : String
+  from_sha256_ : String
+  to_sha256_ : String
+  scanned_count_ : Int
+  unchanged_count_ : Int
+  impacts_ : ReadOnlyArray[DomainImpact]
+}
+pub fn SnapshotImpact::changed_count(Self) -> Int
+pub fn SnapshotImpact::from_revision(Self) -> String
+pub fn SnapshotImpact::from_sha256(Self) -> String
+pub fn SnapshotImpact::impacts(Self) -> ReadOnlyArray[DomainImpact]
+pub fn SnapshotImpact::is_empty(Self) -> Bool
+pub fn SnapshotImpact::scanned_count(Self) -> Int
+pub fn SnapshotImpact::to_csv(Self) -> String
+pub fn SnapshotImpact::to_revision(Self) -> String
+pub fn SnapshotImpact::to_sha256(Self) -> String
+pub fn SnapshotImpact::unchanged_count(Self) -> Int
 
 pub struct SuffixList {
   children : Array[Map[String, Int]]
