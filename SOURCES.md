@@ -26,3 +26,5 @@ assertions from the upstream
 [`tests/test_psl.txt`](https://github.com/publicsuffix/list/blob/main/tests/test_psl.txt),
 whose header dedicates its copyright to the public domain under CC0 1.0. Tests
 also use small synthetic rule sets written for MoonSuffix to isolate invariants.
+The `verify_psl_test_file` API parses that fixture's call syntax so users can
+run independently obtained upstream cases without bundling them in this module.

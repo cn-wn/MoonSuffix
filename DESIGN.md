@@ -120,6 +120,20 @@ Applications implementing schemeful same-site behavior must parse and compare
 URL schemes separately, and Cookie Domain acceptance requires additional RFC
 6265 domain-matching rules.
 
+## Conformance verification
+
+`verify_psl_test_file` consumes the line-oriented syntax used by the upstream
+CC0 `tests/test_psl.txt` fixture. Blank lines and `//` comments are ignored;
+every other line must be an exact `checkPublicSuffix(input, expected);` call
+using `null` or an unescaped single-quoted domain. A malformed test file fails
+with a source line and reason instead of silently skipping coverage.
+
+The upstream format uses `null` for several different outcomes. MoonSuffix
+accepts a rejected hostname, a public suffix without a registrable domain, or a
+literal null input when null is expected, but retains those distinct actual
+outcomes when a case fails. Reports preserve source order and export only
+failures as fully quoted deterministic CSV.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map

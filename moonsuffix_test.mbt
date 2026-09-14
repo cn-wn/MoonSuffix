@@ -731,3 +731,77 @@ test "focused convenience queries agree with lookup" {
   assert_eq(suffixes.is_public_suffix("com").unwrap(), true)
   assert_eq(suffixes.is_public_suffix("example.com").unwrap(), false)
 }
+
+///|
+test "verify upstream-style PSL cases with comments nulls and Unicode" {
+  let cases =
+    #|// compact CC0-format conformance sample
+    #|checkPublicSuffix(null, null);
+    #|checkPublicSuffix('COM', null);
+    #|checkPublicSuffix('example.COM', 'example.com');
+    #|checkPublicSuffix('.example.com', null);
+    #|checkPublicSuffix('a.b.example.example', 'example.example');
+    #|checkPublicSuffix('a.b.test.ck', 'b.test.ck');
+    #|checkPublicSuffix('www.www.ck', 'www.ck');
+    #|checkPublicSuffix('商店.公司.cn', '商店.公司.cn');
+  let report = official_semantics_fixture().verify_psl_test_file(cases).unwrap()
+  assert_eq(report.total_count(), 8)
+  assert_eq(report.passed_count(), 8)
+  assert_eq(report.failed_count(), 0)
+  assert_eq(report.failures().length(), 0)
+  assert_eq(report.is_success(), true)
+  assert_eq(report.to_csv(), "\"line\",\"input\",\"expected\",\"actual\"\n")
+}
+
+///|
+test "conformance report preserves ordered mismatch diagnostics" {
+  let cases =
+    #|checkPublicSuffix('example.com', 'wrong.com');
+    #|checkPublicSuffix('.com', 'example.com');
+    #|checkPublicSuffix('com', 'com');
+    #|checkPublicSuffix(null, 'example.com');
+  let report = official_semantics_fixture().verify_psl_test_file(cases).unwrap()
+  assert_eq(report.total_count(), 4)
+  assert_eq(report.passed_count(), 0)
+  assert_eq(report.failed_count(), 4)
+  assert_eq(report.is_success(), false)
+  let failures = report.failures()
+  assert_eq(failures[0].line(), 1)
+  assert_eq(failures[0].input(), Some("example.com"))
+  assert_eq(failures[0].expected(), Some("wrong.com"))
+  assert_eq(failures[0].actual(), RegistrableDomain("example.com"))
+  assert_eq(failures[1].actual(), RejectedDomain(EmptyLabel(0)))
+  assert_eq(failures[2].actual(), NoRegistrableDomain)
+  assert_eq(failures[3].actual(), NullInput)
+  assert_eq(
+    report.to_csv(),
+    (
+      #|"line","input","expected","actual"
+      #|"1","example.com","wrong.com","example.com"
+      #|"2",".com","example.com","rejected: domain contains an empty label at index 0"
+      #|"3","com","com","no_registrable_domain"
+      #|"4","null","example.com","null_input"
+      #|
+    ),
+  )
+}
+
+///|
+test "reject malformed conformance syntax and recover on the next run" {
+  let suffixes = official_semantics_fixture()
+  assert_true(
+    suffixes.verify_psl_test_file("checkPublicSuffix('com');")
+    is Err(InvalidConformanceCase(1, _, _)),
+  )
+  assert_true(
+    suffixes.verify_psl_test_file("checkPublicSuffix('a\\b.com', null);")
+    is Err(InvalidConformanceCase(1, _, _)),
+  )
+  assert_eq(
+    suffixes
+    .verify_psl_test_file("checkPublicSuffix('example.com', 'example.com');")
+    .unwrap()
+    .passed_count(),
+    1,
+  )
+}

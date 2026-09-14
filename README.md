@@ -77,6 +77,8 @@ moon run cmd/main
   invalid hostnames as row-level errors; `BatchReport::to_csv` exports every row.
 - `site_key` and `same_registrable_site` expose canonical registrable-hostname
   boundaries for Cookie policy and hostname-level same-site integration.
+- `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains
+  ordered mismatch diagnostics, and exports failures as deterministic CSV.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
   convenience queries.
 - Rules may be exact (`co.uk`), wildcard (`*.ck`), or exception (`!www.ck`).

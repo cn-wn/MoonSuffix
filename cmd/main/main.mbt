@@ -80,4 +80,16 @@ fn main {
     .same_registrable_site("www.example.com", "api.example.com.")
     .unwrap()
   println("same registrable site: \{related}")
+  let conformance = suffixes
+    .verify_psl_test_file(
+      (
+        #|checkPublicSuffix('example.com', 'example.com');
+        #|checkPublicSuffix('a.b.test.ck', 'b.test.ck');
+        #|checkPublicSuffix('.com', null);
+      ),
+    )
+    .unwrap()
+  println(
+    "conformance: \{conformance.passed_count()}/\{conformance.total_count()} passed",
+  )
 }
