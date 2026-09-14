@@ -67,6 +67,8 @@ moon run cmd/main
   snapshots, hashing, and reproducible builds.
 - `snapshot` binds canonical PSL text to an opaque source revision, a SHA-256
   digest, its rule count, and a deterministic line-oriented manifest.
+- `Snapshot::restore` verifies stored canonical PSL text against every manifest
+  field before reconstructing a trusted snapshot.
 - `Snapshot::diff` produces deterministic additions, removals, and unambiguous
   ICANN/PRIVATE section moves between two snapshots.
 - `Snapshot::analyze_impact` evaluates a hostname inventory against old and new

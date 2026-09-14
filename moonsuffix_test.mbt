@@ -257,6 +257,91 @@ test "snapshot digest changes when canonical rules change" {
 }
 
 ///|
+test "restore verifies and round trips a stored snapshot" {
+  let original = SuffixList::parse("公司.cn\ncom")
+    .unwrap()
+    .snapshot("release 2026/秋")
+  let restored = Snapshot::restore(
+    original.psl_text(),
+    original.manifest_text(),
+  ).unwrap()
+  assert_eq(restored.source_revision(), original.source_revision())
+  assert_eq(restored.psl_text(), original.psl_text())
+  assert_eq(restored.sha256(), original.sha256())
+  assert_eq(restored.rule_count(), original.rule_count())
+  assert_eq(restored.manifest_text(), original.manifest_text())
+}
+
+///|
+test "restore rejects malformed and noncanonical snapshot inputs" {
+  let snapshot = SuffixList::parse("com\norg").unwrap().snapshot("v1")
+  assert_true(
+    Snapshot::restore(snapshot.psl_text(), snapshot.manifest_text() + "extra")
+    is Err(InvalidManifest("expected four LF-terminated fields")),
+  )
+  assert_true(
+    Snapshot::restore(
+      snapshot.psl_text(),
+      "format=other\nsource_revision=v1\npsl_sha256=0000000000000000000000000000000000000000000000000000000000000000\nrule_count=2\n",
+    )
+    is Err(InvalidManifest("unsupported format")),
+  )
+  assert_true(
+    Snapshot::restore(
+      snapshot.psl_text(),
+      "format=moonsuffix-snapshot-v1\nsource_revision=%ff\npsl_sha256=0000000000000000000000000000000000000000000000000000000000000000\nrule_count=2\n",
+    )
+    is Err(InvalidRevisionEncoding),
+  )
+  assert_true(
+    Snapshot::restore(
+      snapshot.psl_text(),
+      "format=moonsuffix-snapshot-v1\nsource_revision=v1\npsl_sha256=ABC\nrule_count=2\n",
+    )
+    is Err(InvalidDigest("ABC")),
+  )
+  assert_true(
+    Snapshot::restore(
+      "foo.*.com\n", "format=moonsuffix-snapshot-v1\nsource_revision=v1\npsl_sha256=0000000000000000000000000000000000000000000000000000000000000000\nrule_count=0\n",
+    )
+    is Err(InvalidSnapshotRules(_)),
+  )
+  assert_true(
+    Snapshot::restore("org\ncom\n", snapshot.manifest_text())
+    is Err(NonCanonicalPsl),
+  )
+}
+
+///|
+test "restore detects digest and rule count tampering" {
+  let snapshot = SuffixList::parse("com\norg").unwrap().snapshot("v1")
+  let wrong_digest = "format=moonsuffix-snapshot-v1\n" +
+    "source_revision=v1\n" +
+    "psl_sha256=0000000000000000000000000000000000000000000000000000000000000000\n" +
+    "rule_count=2\n"
+  assert_true(
+    Snapshot::restore(snapshot.psl_text(), wrong_digest)
+    is Err(DigestMismatch(_, _)),
+  )
+  let wrong_count = "format=moonsuffix-snapshot-v1\n" +
+    "source_revision=v1\n" +
+    "psl_sha256=\{snapshot.sha256()}\n" +
+    "rule_count=3\n"
+  assert_true(
+    Snapshot::restore(snapshot.psl_text(), wrong_count)
+    is Err(RuleCountMismatch(3, 2)),
+  )
+  let malformed_count = "format=moonsuffix-snapshot-v1\n" +
+    "source_revision=v1\n" +
+    "psl_sha256=\{snapshot.sha256()}\n" +
+    "rule_count=02\n"
+  assert_true(
+    Snapshot::restore(snapshot.psl_text(), malformed_count)
+    is Err(InvalidRuleCount("02")),
+  )
+}
+
+///|
 test "snapshot diff classifies additions removals and section moves" {
   let before = SuffixList::parse(
       (

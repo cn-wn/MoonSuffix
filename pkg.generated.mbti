@@ -122,6 +122,7 @@ pub fn Snapshot::analyze_impact(Self, Self, Array[String], LookupOptions) -> Sna
 pub fn Snapshot::diff(Self, Self) -> SnapshotDiff
 pub fn Snapshot::manifest_text(Self) -> String
 pub fn Snapshot::psl_text(Self) -> String
+pub fn Snapshot::restore(String, String) -> Result[Self, SnapshotLoadError]
 pub fn Snapshot::rule_count(Self) -> Int
 pub fn Snapshot::sha256(Self) -> String
 pub fn Snapshot::source_revision(Self) -> String
@@ -172,6 +173,18 @@ pub fn SnapshotImpact::to_csv(Self) -> String
 pub fn SnapshotImpact::to_revision(Self) -> String
 pub fn SnapshotImpact::to_sha256(Self) -> String
 pub fn SnapshotImpact::unchanged_count(Self) -> Int
+
+pub(all) enum SnapshotLoadError {
+  InvalidManifest(String)
+  InvalidRevisionEncoding
+  InvalidDigest(String)
+  InvalidRuleCount(String)
+  InvalidSnapshotRules(ListParseError)
+  NonCanonicalPsl
+  DigestMismatch(String, String)
+  RuleCountMismatch(Int, Int)
+} derive(Eq, @debug.Debug)
+pub fn SnapshotLoadError::message(Self) -> String
 
 pub struct SuffixList {
   children : Array[Map[String, Int]]

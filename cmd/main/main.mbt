@@ -46,6 +46,11 @@ fn main {
   println("canonical PSL:\n\{suffixes.to_psl_text()}")
   let snapshot = suffixes.snapshot("example-rules-v1")
   println("snapshot manifest:\n\{snapshot.manifest_text()}")
+  let restored = @moonsuffix.Snapshot::restore(
+    snapshot.psl_text(),
+    snapshot.manifest_text(),
+  ).unwrap()
+  println("verified snapshot revision: \{restored.source_revision()}")
   let updated_rules =
     #|// ===BEGIN ICANN DOMAINS===
     #|com

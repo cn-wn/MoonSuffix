@@ -59,7 +59,11 @@ the original ordering are intentionally discarded. `snapshot` adds reproducible
 metadata by hashing the canonical text's UTF-8 bytes with SHA-256 and attaching
 an opaque caller-provided source revision and rule count. Its line-oriented
 manifest percent-encodes the revision, preventing embedded whitespace or
-delimiters from changing structure.
+delimiters from changing structure. `Snapshot::restore` is the inverse storage
+boundary: it accepts only the exact four-field versioned manifest, canonical
+percent-encoding and decimal forms, lowercase SHA-256 text, valid canonical PSL
+bytes, and matching digest and rule count. A restored snapshot therefore has
+the same invariants as one created in memory.
 
 ## Why the data is injected
 
