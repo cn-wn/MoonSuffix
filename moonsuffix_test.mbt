@@ -677,6 +677,96 @@ test "site keys reject public suffixes invalid domains and strict unknowns" {
 }
 
 ///|
+test "cookie scopes normalize host-only and parent-domain cookies" {
+  let suffixes = sectioned_fixture()
+  let host_only = suffixes
+    .resolve_cookie_scope("WWW.Example.COM.", None)
+    .unwrap()
+  assert_eq(host_only.domain(), "www.example.com")
+  assert_eq(host_only.is_host_only(), true)
+  let parent = suffixes
+    .resolve_cookie_scope("Api.Shop.Example.COM", Some(".Example.COM"))
+    .unwrap()
+  assert_eq(parent.domain(), "example.com")
+  assert_eq(parent.is_host_only(), false)
+  let exact = suffixes
+    .resolve_cookie_scope("Api.Example.COM", Some("api.example.com"))
+    .unwrap()
+  assert_eq(exact.domain(), "api.example.com")
+  assert_eq(exact.is_host_only(), false)
+}
+
+///|
+test "cookie scopes reject public suffixes and unrelated domains" {
+  let suffixes = sectioned_fixture()
+  assert_eq(
+    suffixes.resolve_cookie_scope("www.example.com", Some("com")),
+    Err(PublicSuffixDomain("com")),
+  )
+  assert_eq(
+    suffixes.resolve_cookie_scope("alice.github.io", Some("github.io")),
+    Err(PublicSuffixDomain("github.io")),
+  )
+  assert_eq(
+    suffixes.resolve_cookie_scope("badexample.com", Some("example.com")),
+    Err(DomainMismatch("badexample.com", "example.com")),
+  )
+  assert_eq(
+    suffixes.resolve_cookie_scope("shop.example.com", Some("api.example.com")),
+    Err(DomainMismatch("shop.example.com", "api.example.com")),
+  )
+}
+
+///|
+test "cookie scopes handle public-suffix hosts and explicit policies" {
+  let suffixes = sectioned_fixture()
+  let public_host = suffixes.resolve_cookie_scope("COM", Some("com")).unwrap()
+  assert_eq(public_host.domain(), "com")
+  assert_eq(public_host.is_host_only(), true)
+  let icann_only = suffixes
+    .resolve_cookie_scope_with_options(
+      "alice.github.io",
+      Some("github.io"),
+      LookupOptions::new(IcannOnly, UseDefaultWildcard),
+    )
+    .unwrap()
+  assert_eq(icann_only.domain(), "github.io")
+  assert_eq(icann_only.is_host_only(), false)
+}
+
+///|
+test "cookie scopes reject malformed server domain values and recover" {
+  let suffixes = sectioned_fixture()
+  assert_true(
+    suffixes.resolve_cookie_scope("a..example.com", None)
+    is Err(InvalidRequestHost(_, _)),
+  )
+  assert_true(
+    suffixes.resolve_cookie_scope("api.example.com", Some(""))
+    is Err(InvalidDomainAttribute(_, _)),
+  )
+  assert_true(
+    suffixes.resolve_cookie_scope("api.example.com", Some("example.com."))
+    is Err(InvalidDomainAttribute(_, _)),
+  )
+  assert_true(
+    suffixes.resolve_cookie_scope("api.example.com", Some("exa_mple.com"))
+    is Err(InvalidDomainAttribute(_, _)),
+  )
+  assert_true(
+    suffixes.resolve_cookie_scope("api.example.com", Some("例子.com"))
+    is Err(InvalidDomainAttribute(_, _)),
+  )
+  assert_eq(
+    suffixes
+    .resolve_cookie_scope("api.example.com", Some("example.com"))
+    .unwrap()
+    .domain(),
+    "example.com",
+  )
+}
+
+///|
 test "implicit wildcard handles unlisted suffixes" {
   let suffixes = official_semantics_fixture()
   let one = suffixes.lookup("example").unwrap()

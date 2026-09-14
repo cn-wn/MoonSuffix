@@ -65,6 +65,21 @@ pub fn ConformanceReport::passed_count(Self) -> Int
 pub fn ConformanceReport::to_csv(Self) -> String
 pub fn ConformanceReport::total_count(Self) -> Int
 
+pub struct CookieScope {
+  domain_ : String
+  host_only_ : Bool
+} derive(Eq, @debug.Debug)
+pub fn CookieScope::domain(Self) -> String
+pub fn CookieScope::is_host_only(Self) -> Bool
+
+pub(all) enum CookieScopeError {
+  InvalidRequestHost(String, String)
+  InvalidDomainAttribute(String, String)
+  PublicSuffixDomain(String)
+  DomainMismatch(String, String)
+} derive(Eq, @debug.Debug)
+pub fn CookieScopeError::message(Self) -> String
+
 pub(all) enum DomainError {
   EmptyDomain
   EmptyLabel(Int)
@@ -254,6 +269,8 @@ pub fn SuffixList::node_count(Self) -> Int
 pub fn SuffixList::parse(String) -> Result[Self, ListParseError]
 pub fn SuffixList::public_suffix(Self, String) -> Result[String, DomainError]
 pub fn SuffixList::registrable_domain(Self, String) -> Result[String?, DomainError]
+pub fn SuffixList::resolve_cookie_scope(Self, String, String?) -> Result[CookieScope, CookieScopeError]
+pub fn SuffixList::resolve_cookie_scope_with_options(Self, String, String?, LookupOptions) -> Result[CookieScope, CookieScopeError]
 pub fn SuffixList::rule_count(Self) -> Int
 pub fn SuffixList::same_registrable_site(Self, String, String) -> Result[Bool, SiteError]
 pub fn SuffixList::same_registrable_site_with_options(Self, String, String, LookupOptions) -> Result[Bool, SiteError]

@@ -143,6 +143,23 @@ only. It reuses the same acceptance, boundary, and rule-metadata categories as
 snapshot impact analysis, retains duplicates and original indexes, counts
 unchanged inputs, and exports only policy-sensitive rows as deterministic CSV.
 
+## Cookie domain scope
+
+`resolve_cookie_scope` implements the hostname portion of RFC 10025 cookie
+storage. It canonicalizes ASCII DNS names to lowercase, removes one compatibility
+leading dot from a present `Domain` attribute, and uses label-boundary domain
+matching rather than a raw string suffix. A missing attribute produces a
+host-only cookie. A public-suffix attribute is rejected unless it exactly equals
+the request host, in which case the user-agent algorithm stores a host-only
+cookie instead.
+
+The default profile includes ICANN and PRIVATE rules because both can separate
+independently controlled sites; an explicit lookup policy remains available for
+specialized deployments. Request hosts may carry one trailing DNS root dot, but
+a server-produced `Domain` value may not. Both inputs must already be DNS names
+in ASCII/A-label form. This API does not parse URLs, IP literals, Set-Cookie
+headers, Unicode IDNA input, paths, schemes, or cookie prefixes.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map

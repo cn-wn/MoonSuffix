@@ -79,6 +79,9 @@ moon run cmd/main
   invalid hostnames as row-level errors; `BatchReport::to_csv` exports every row.
 - `site_key` and `same_registrable_site` expose canonical registrable-hostname
   boundaries for Cookie policy and hostname-level same-site integration.
+- `resolve_cookie_scope` converts an optional Cookie `Domain` attribute into its
+  canonical stored domain and host-only flag, rejecting public-suffix scope
+  escalation, unrelated domains, and malformed non-ASCII server values.
 - `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains
   ordered mismatch diagnostics, and exports failures as deterministic CSV.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
@@ -103,7 +106,7 @@ moon run cmd/main
 
 1. Add an adapter for the maintained MoonBit UTS #46 / IDNA implementation and
    run the complete upstream Unicode/Punycode conformance cases.
-2. Add URL adapters for schemeful same-site and Cookie Domain validation.
+2. Add URL adapters for schemeful same-site and complete Set-Cookie parsing.
 
 ## Validation
 

@@ -9,6 +9,7 @@ No source code or PSL data is copied into this repository.
 - [Authoritative Public Suffix List download](https://publicsuffix.org/list/public_suffix_list.dat)
 - [Public Suffix List project](https://github.com/publicsuffix/list)
 - [NIST FIPS 180-4 Secure Hash Standard](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)
+- [RFC 10025: Cookies: HTTP State Management Mechanism](https://www.rfc-editor.org/rfc/rfc10025.html)
 
 The authoritative `public_suffix_list.dat` is licensed under MPL-2.0. It is not
 bundled here. Applications that vendor or redistribute that data, or distribute

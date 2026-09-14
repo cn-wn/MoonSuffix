@@ -100,4 +100,10 @@ fn main {
   println(
     "strict-policy changes: \{policy_impact.changed_count()}/\{policy_impact.scanned_count()}",
   )
+  let cookie_scope = suffixes
+    .resolve_cookie_scope("api.shop.example.com", Some(".example.com"))
+    .unwrap()
+  println(
+    "cookie scope: domain=\{cookie_scope.domain()} host-only=\{cookie_scope.is_host_only()}",
+  )
 }
