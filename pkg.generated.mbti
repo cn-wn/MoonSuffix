@@ -36,6 +36,9 @@ pub(all) enum ConformanceActual {
   NoRegistrableDomain
   RegistrableDomain(String)
 } derive(Eq, @debug.Debug)
+pub fn ConformanceActual::equal(Self, Self) -> Bool
+pub fn ConformanceActual::not_equal(Self, Self) -> Bool
+pub fn ConformanceActual::to_repr(Self) -> @debug.Repr
 
 pub struct ConformanceFailure {
   line_ : Int
@@ -51,7 +54,10 @@ pub fn ConformanceFailure::line(Self) -> Int
 pub(all) enum ConformanceParseError {
   InvalidConformanceCase(Int, String, String)
 } derive(Eq, @debug.Debug)
+pub fn ConformanceParseError::equal(Self, Self) -> Bool
 pub fn ConformanceParseError::message(Self) -> String
+pub fn ConformanceParseError::not_equal(Self, Self) -> Bool
+pub fn ConformanceParseError::to_repr(Self) -> @debug.Repr
 
 pub struct ConformanceReport {
   total_count_ : Int
@@ -70,7 +76,10 @@ pub struct CookieScope {
   host_only_ : Bool
 } derive(Eq, @debug.Debug)
 pub fn CookieScope::domain(Self) -> String
+pub fn CookieScope::equal(Self, Self) -> Bool
 pub fn CookieScope::is_host_only(Self) -> Bool
+pub fn CookieScope::not_equal(Self, Self) -> Bool
+pub fn CookieScope::to_repr(Self) -> @debug.Repr
 
 pub(all) enum CookieScopeError {
   InvalidRequestHost(String, String)
@@ -78,7 +87,10 @@ pub(all) enum CookieScopeError {
   PublicSuffixDomain(String)
   DomainMismatch(String, String)
 } derive(Eq, @debug.Debug)
+pub fn CookieScopeError::equal(Self, Self) -> Bool
 pub fn CookieScopeError::message(Self) -> String
+pub fn CookieScopeError::not_equal(Self, Self) -> Bool
+pub fn CookieScopeError::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DomainError {
   EmptyDomain
@@ -86,7 +98,10 @@ pub(all) enum DomainError {
   InvalidDomainCharacter(Int, Char)
   UnlistedSuffix(String)
 } derive(Eq, @debug.Debug)
+pub fn DomainError::equal(Self, Self) -> Bool
 pub fn DomainError::message(Self) -> String
+pub fn DomainError::not_equal(Self, Self) -> Bool
+pub fn DomainError::to_repr(Self) -> @debug.Repr
 
 pub struct DomainImpact {
   index_ : Int
@@ -107,11 +122,17 @@ pub(all) enum ImpactKind {
   BoundaryChanged
   RuleMetadataChanged
 } derive(Eq, @debug.Debug)
+pub fn ImpactKind::equal(Self, Self) -> Bool
+pub fn ImpactKind::not_equal(Self, Self) -> Bool
+pub fn ImpactKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ListParseError {
   InvalidRule(Int, String, String)
 } derive(Eq, @debug.Debug)
+pub fn ListParseError::equal(Self, Self) -> Bool
 pub fn ListParseError::message(Self) -> String
+pub fn ListParseError::not_equal(Self, Self) -> Bool
+pub fn ListParseError::to_repr(Self) -> @debug.Repr
 
 pub struct Lookup {
   normalized_domain : String
@@ -160,23 +181,35 @@ pub(all) enum RuleKind {
   WildcardRule
   ExceptionRule
 } derive(Eq, @debug.Debug)
+pub fn RuleKind::equal(Self, Self) -> Bool
+pub fn RuleKind::not_equal(Self, Self) -> Bool
+pub fn RuleKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RuleSection {
   UnsectionedRule
   IcannSection
   PrivateSection
 } derive(Eq, @debug.Debug)
+pub fn RuleSection::equal(Self, Self) -> Bool
+pub fn RuleSection::not_equal(Self, Self) -> Bool
+pub fn RuleSection::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SectionScope {
   IcannAndPrivate
   IcannOnly
 } derive(Eq, @debug.Debug)
+pub fn SectionScope::equal(Self, Self) -> Bool
+pub fn SectionScope::not_equal(Self, Self) -> Bool
+pub fn SectionScope::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SiteError {
   InvalidSiteDomain(DomainError)
   NoRegistrableDomain(String)
 } derive(Eq, @debug.Debug)
+pub fn SiteError::equal(Self, Self) -> Bool
 pub fn SiteError::message(Self) -> String
+pub fn SiteError::not_equal(Self, Self) -> Bool
+pub fn SiteError::to_repr(Self) -> @debug.Repr
 
 pub struct Snapshot {
   source_revision_ : String
@@ -198,6 +231,9 @@ pub(all) enum SnapshotChange {
   RemovedRule(String, RuleSection)
   MovedRule(String, RuleSection, RuleSection)
 } derive(Eq, @debug.Debug)
+pub fn SnapshotChange::equal(Self, Self) -> Bool
+pub fn SnapshotChange::not_equal(Self, Self) -> Bool
+pub fn SnapshotChange::to_repr(Self) -> @debug.Repr
 
 pub struct SnapshotDiff {
   from_revision_ : String
@@ -250,7 +286,10 @@ pub(all) enum SnapshotLoadError {
   DigestMismatch(String, String)
   RuleCountMismatch(Int, Int)
 } derive(Eq, @debug.Debug)
+pub fn SnapshotLoadError::equal(Self, Self) -> Bool
 pub fn SnapshotLoadError::message(Self) -> String
+pub fn SnapshotLoadError::not_equal(Self, Self) -> Bool
+pub fn SnapshotLoadError::to_repr(Self) -> @debug.Repr
 
 pub struct SuffixList {
   children : Array[Map[String, Int]]
@@ -284,6 +323,9 @@ pub(all) enum UnknownSuffixPolicy {
   UseDefaultWildcard
   RequireListedSuffix
 } derive(Eq, @debug.Debug)
+pub fn UnknownSuffixPolicy::equal(Self, Self) -> Bool
+pub fn UnknownSuffixPolicy::not_equal(Self, Self) -> Bool
+pub fn UnknownSuffixPolicy::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

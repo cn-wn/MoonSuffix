@@ -80,7 +80,7 @@ fn decode_manifest_revision(
       index = index + 1
     }
   }
-  let decoded = Ok(@utf8.decode(Bytes::from_array(bytes).view())) catch {
+  let decoded = Ok(@utf8.decode(Bytes::from_array(bytes).exact_view())) catch {
     _ => Err(InvalidRevisionEncoding)
   }
   match decoded {

@@ -1,6 +1,6 @@
 ///|
-fn official_semantics_fixture() -> SuffixList {
-  SuffixList::parse(
+fn official_semantics_fixture() -> @moonsuffix.SuffixList {
+  @moonsuffix.SuffixList::parse(
     (
       #|// compact fixture derived from the upstream CC0 semantic cases
       #|biz
@@ -23,8 +23,8 @@ fn official_semantics_fixture() -> SuffixList {
 }
 
 ///|
-fn sectioned_fixture() -> SuffixList {
-  SuffixList::parse(
+fn sectioned_fixture() -> @moonsuffix.SuffixList {
+  @moonsuffix.SuffixList::parse(
     (
       #|// ===BEGIN ICANN DOMAINS===
       #|com
@@ -40,7 +40,7 @@ fn sectioned_fixture() -> SuffixList {
 
 ///|
 test "parse comments whitespace and duplicate rules deterministically" {
-  let suffixes = SuffixList::parse(
+  let suffixes = @moonsuffix.SuffixList::parse(
     (
       #| // comment
       #|com trailing-comment
@@ -55,30 +55,31 @@ test "parse comments whitespace and duplicate rules deterministically" {
 
 ///|
 test "reject malformed rule syntax and recover on the next parse" {
-  assert_true(SuffixList::parse("foo.*.com") is Err(_))
-  assert_true(SuffixList::parse("*foo.com") is Err(_))
-  assert_true(SuffixList::parse(".com") is Err(_))
-  assert_true(SuffixList::parse("!") is Err(_))
-  let valid = SuffixList::parse("com").unwrap()
+  assert_true(@moonsuffix.SuffixList::parse("foo.*.com") is Err(_))
+  assert_true(@moonsuffix.SuffixList::parse("*foo.com") is Err(_))
+  assert_true(@moonsuffix.SuffixList::parse(".com") is Err(_))
+  assert_true(@moonsuffix.SuffixList::parse("!") is Err(_))
+  let valid = @moonsuffix.SuffixList::parse("com").unwrap()
   assert_eq(valid.public_suffix("www.example.com").unwrap(), "com")
 }
 
 ///|
 test "parse PSL section markers strictly and recover after errors" {
   assert_true(
-    SuffixList::parse(
+    @moonsuffix.SuffixList::parse(
       "// ===BEGIN ICANN DOMAINS===\ncom\n// ===END PRIVATE DOMAINS===",
     )
     is Err(_),
   )
   assert_true(
-    SuffixList::parse(
+    @moonsuffix.SuffixList::parse(
       "// ===BEGIN ICANN DOMAINS===\n// ===BEGIN PRIVATE DOMAINS===",
     )
     is Err(_),
   )
   assert_true(
-    SuffixList::parse("// ===BEGIN PRIVATE DOMAINS===\ngithub.io") is Err(_),
+    @moonsuffix.SuffixList::parse("// ===BEGIN PRIVATE DOMAINS===\ngithub.io")
+    is Err(_),
   )
   let valid = sectioned_fixture()
   assert_eq(valid.rule_count(), 3)
@@ -94,7 +95,7 @@ test "browser and ICANN-only scopes select different prevailing rules" {
   let icann = suffixes
     .lookup_with_options(
       "user.github.io",
-      LookupOptions::new(IcannOnly, UseDefaultWildcard),
+      @moonsuffix.LookupOptions::new(IcannOnly, UseDefaultWildcard),
     )
     .unwrap()
   assert_eq(icann.public_suffix(), "io")
@@ -110,7 +111,7 @@ test "strict policy rejects unknown suffixes while defaults remain compatible" {
   assert_true(
     suffixes.lookup_with_options(
       "service.internal",
-      LookupOptions::strict_icann(),
+      @moonsuffix.LookupOptions::strict_icann(),
     )
     is Err(UnlistedSuffix("service.internal")),
   )
@@ -118,9 +119,12 @@ test "strict policy rejects unknown suffixes while defaults remain compatible" {
 
 ///|
 test "unsectioned custom rules stay eligible in ICANN-only mode" {
-  let suffixes = SuffixList::parse("internal").unwrap()
+  let suffixes = @moonsuffix.SuffixList::parse("internal").unwrap()
   let result = suffixes
-    .lookup_with_options("api.service.internal", LookupOptions::strict_icann())
+    .lookup_with_options(
+      "api.service.internal",
+      @moonsuffix.LookupOptions::strict_icann(),
+    )
     .unwrap()
   assert_eq(result.public_suffix(), "internal")
   assert_eq(result.rule_section(), Some(UnsectionedRule))
@@ -128,7 +132,7 @@ test "unsectioned custom rules stay eligible in ICANN-only mode" {
 
 ///|
 test "serialize PSL text in a stable canonical order" {
-  let suffixes = SuffixList::parse(
+  let suffixes = @moonsuffix.SuffixList::parse(
     (
       #|z.local trailing-field
       #|*.local
@@ -166,7 +170,7 @@ test "serialize PSL text in a stable canonical order" {
       #|
     ),
   )
-  let reordered = SuffixList::parse(
+  let reordered = @moonsuffix.SuffixList::parse(
     (
       #|*.local
       #|z.local
@@ -188,7 +192,7 @@ test "serialize PSL text in a stable canonical order" {
 
 ///|
 test "serialized rule sets round trip without semantic or byte drift" {
-  let original = SuffixList::parse(
+  let original = @moonsuffix.SuffixList::parse(
     (
       #|custom
       #|// ===BEGIN ICANN DOMAINS===
@@ -204,7 +208,7 @@ test "serialized rule sets round trip without semantic or byte drift" {
     ),
   ).unwrap()
   let canonical = original.to_psl_text()
-  let restored = SuffixList::parse(canonical).unwrap()
+  let restored = @moonsuffix.SuffixList::parse(canonical).unwrap()
   assert_eq(restored.rule_count(), original.rule_count())
   assert_eq(restored.to_psl_text(), canonical)
   for domain in ["api.custom", "www.www.ck", "user.github.io", "unknown"] {
@@ -219,15 +223,18 @@ test "serialized rule sets round trip without semantic or byte drift" {
 
 ///|
 test "empty rule sets serialize and round trip as empty text" {
-  let empty = SuffixList::parse("").unwrap()
+  let empty = @moonsuffix.SuffixList::parse("").unwrap()
   assert_eq(empty.to_psl_text(), "")
-  assert_eq(SuffixList::parse(empty.to_psl_text()).unwrap().rule_count(), 0)
+  assert_eq(
+    @moonsuffix.SuffixList::parse(empty.to_psl_text()).unwrap().rule_count(),
+    0,
+  )
 }
 
 ///|
 test "snapshot binds canonical Unicode PSL bytes to provenance" {
-  let first = SuffixList::parse("公司.cn\ncom").unwrap()
-  let reordered = SuffixList::parse("com\n公司.cn").unwrap()
+  let first = @moonsuffix.SuffixList::parse("公司.cn\ncom").unwrap()
+  let reordered = @moonsuffix.SuffixList::parse("com\n公司.cn").unwrap()
   let snapshot = first.snapshot("release 2026/09")
   assert_eq(snapshot.source_revision(), "release 2026/09")
   assert_eq(snapshot.psl_text(), "com\n公司.cn\n")
@@ -251,17 +258,19 @@ test "snapshot binds canonical Unicode PSL bytes to provenance" {
 
 ///|
 test "snapshot digest changes when canonical rules change" {
-  let before = SuffixList::parse("com").unwrap().snapshot("same")
-  let after = SuffixList::parse("com\norg").unwrap().snapshot("same")
+  let before = @moonsuffix.SuffixList::parse("com").unwrap().snapshot("same")
+  let after = @moonsuffix.SuffixList::parse("com\norg")
+    .unwrap()
+    .snapshot("same")
   assert_true(before.sha256() != after.sha256())
 }
 
 ///|
 test "restore verifies and round trips a stored snapshot" {
-  let original = SuffixList::parse("公司.cn\ncom")
+  let original = @moonsuffix.SuffixList::parse("公司.cn\ncom")
     .unwrap()
     .snapshot("release 2026/秋")
-  let restored = Snapshot::restore(
+  let restored = @moonsuffix.Snapshot::restore(
     original.psl_text(),
     original.manifest_text(),
   ).unwrap()
@@ -274,53 +283,60 @@ test "restore verifies and round trips a stored snapshot" {
 
 ///|
 test "restore rejects malformed and noncanonical snapshot inputs" {
-  let snapshot = SuffixList::parse("com\norg").unwrap().snapshot("v1")
+  let snapshot = @moonsuffix.SuffixList::parse("com\norg")
+    .unwrap()
+    .snapshot("v1")
   assert_true(
-    Snapshot::restore(snapshot.psl_text(), snapshot.manifest_text() + "extra")
+    @moonsuffix.Snapshot::restore(
+      snapshot.psl_text(),
+      snapshot.manifest_text() + "extra",
+    )
     is Err(InvalidManifest("expected four LF-terminated fields")),
   )
   assert_true(
-    Snapshot::restore(
+    @moonsuffix.Snapshot::restore(
       snapshot.psl_text(),
       "format=other\nsource_revision=v1\npsl_sha256=0000000000000000000000000000000000000000000000000000000000000000\nrule_count=2\n",
     )
     is Err(InvalidManifest("unsupported format")),
   )
   assert_true(
-    Snapshot::restore(
+    @moonsuffix.Snapshot::restore(
       snapshot.psl_text(),
       "format=moonsuffix-snapshot-v1\nsource_revision=%ff\npsl_sha256=0000000000000000000000000000000000000000000000000000000000000000\nrule_count=2\n",
     )
     is Err(InvalidRevisionEncoding),
   )
   assert_true(
-    Snapshot::restore(
+    @moonsuffix.Snapshot::restore(
       snapshot.psl_text(),
       "format=moonsuffix-snapshot-v1\nsource_revision=v1\npsl_sha256=ABC\nrule_count=2\n",
     )
     is Err(InvalidDigest("ABC")),
   )
   assert_true(
-    Snapshot::restore(
+    @moonsuffix.Snapshot::restore(
       "foo.*.com\n", "format=moonsuffix-snapshot-v1\nsource_revision=v1\npsl_sha256=0000000000000000000000000000000000000000000000000000000000000000\nrule_count=0\n",
     )
     is Err(InvalidSnapshotRules(_)),
   )
   assert_true(
-    Snapshot::restore("org\ncom\n", snapshot.manifest_text())
+    @moonsuffix.Snapshot::restore("org\ncom\n", snapshot.manifest_text())
     is Err(NonCanonicalPsl),
   )
 }
 
 ///|
 test "restore detects digest and rule count tampering" {
-  let snapshot = SuffixList::parse("com\norg").unwrap().snapshot("v1")
+  let snapshot = @moonsuffix.SuffixList::parse("com\norg")
+    .unwrap()
+    .snapshot("v1")
   let wrong_digest = "format=moonsuffix-snapshot-v1\n" +
     "source_revision=v1\n" +
     "psl_sha256=0000000000000000000000000000000000000000000000000000000000000000\n" +
     "rule_count=2\n"
   assert_true(
-    Snapshot::restore(snapshot.psl_text(), wrong_digest)
+    @moonsuffix.Snapshot::restore(snapshot.psl_text(), wrong_digest)
     is Err(DigestMismatch(_, _)),
   )
   let wrong_count = "format=moonsuffix-snapshot-v1\n" +
@@ -328,7 +344,7 @@ test "restore detects digest and rule count tampering" {
     "psl_sha256=\{snapshot.sha256()}\n" +
     "rule_count=3\n"
   assert_true(
-    Snapshot::restore(snapshot.psl_text(), wrong_count)
+    @moonsuffix.Snapshot::restore(snapshot.psl_text(), wrong_count)
     is Err(RuleCountMismatch(3, 2)),
   )
   let malformed_count = "format=moonsuffix-snapshot-v1\n" +
@@ -336,14 +352,14 @@ test "restore detects digest and rule count tampering" {
     "psl_sha256=\{snapshot.sha256()}\n" +
     "rule_count=02\n"
   assert_true(
-    Snapshot::restore(snapshot.psl_text(), malformed_count)
+    @moonsuffix.Snapshot::restore(snapshot.psl_text(), malformed_count)
     is Err(InvalidRuleCount("02")),
   )
 }
 
 ///|
 test "snapshot diff classifies additions removals and section moves" {
-  let before = SuffixList::parse(
+  let before = @moonsuffix.SuffixList::parse(
       (
         #|local
         #|// ===BEGIN ICANN DOMAINS===
@@ -359,7 +375,7 @@ test "snapshot diff classifies additions removals and section moves" {
     )
     .unwrap()
     .snapshot("v1")
-  let after = SuffixList::parse(
+  let after = @moonsuffix.SuffixList::parse(
       (
         #|local
         #|// ===BEGIN ICANN DOMAINS===
@@ -409,7 +425,7 @@ test "snapshot diff classifies additions removals and section moves" {
 
 ///|
 test "identical canonical snapshots have an empty semantic diff" {
-  let rules = SuffixList::parse("com\norg").unwrap()
+  let rules = @moonsuffix.SuffixList::parse("com\norg").unwrap()
   let diff = rules.snapshot("old").diff(rules.snapshot("new"))
   assert_eq(diff.is_empty(), true)
   assert_eq(diff.changes().length(), 0)
@@ -420,7 +436,7 @@ test "identical canonical snapshots have an empty semantic diff" {
 
 ///|
 test "multi-section membership changes are not misreported as moves" {
-  let before = SuffixList::parse(
+  let before = @moonsuffix.SuffixList::parse(
       (
         #|// ===BEGIN ICANN DOMAINS===
         #|com
@@ -433,7 +449,7 @@ test "multi-section membership changes are not misreported as moves" {
     )
     .unwrap()
     .snapshot("before")
-  let after = SuffixList::parse(
+  let after = @moonsuffix.SuffixList::parse(
       (
         #|// ===BEGIN PRIVATE DOMAINS===
         #|com
@@ -455,7 +471,7 @@ test "batch lookup preserves order and recovers after row errors" {
   let suffixes = sectioned_fixture()
   let report = suffixes.lookup_batch_with_options(
     ["WWW.Example.COM.", "a..com", "service.internal", "bad,\" domain"],
-    LookupOptions::strict_icann(),
+    @moonsuffix.LookupOptions::strict_icann(),
   )
   assert_eq(report.length(), 4)
   assert_eq(report.success_count(), 1)
@@ -498,7 +514,7 @@ test "browser-default batch keeps unknown suffix behavior" {
 
 ///|
 test "snapshot impact reports only externally visible hostname changes" {
-  let before = SuffixList::parse(
+  let before = @moonsuffix.SuffixList::parse(
       (
         #|meta
         #|// ===BEGIN ICANN DOMAINS===
@@ -511,7 +527,7 @@ test "snapshot impact reports only externally visible hostname changes" {
     )
     .unwrap()
     .snapshot("v1")
-  let after = SuffixList::parse(
+  let after = @moonsuffix.SuffixList::parse(
       (
         #|// ===BEGIN ICANN DOMAINS===
         #|com
@@ -527,7 +543,7 @@ test "snapshot impact reports only externally visible hostname changes" {
   let report = before.analyze_impact(
     after,
     ["api.new", "api.old", "shop.example.co.uk", "api.meta", "api.com"],
-    LookupOptions::strict_icann(),
+    @moonsuffix.LookupOptions::strict_icann(),
   )
   assert_eq(report.from_revision(), "v1")
   assert_eq(report.to_revision(), "v2")
@@ -555,17 +571,23 @@ test "snapshot impact reports only externally visible hostname changes" {
 
 ///|
 test "snapshot impact preserves changed duplicates and handles empty input" {
-  let before = SuffixList::parse("com").unwrap().snapshot("before")
-  let after = SuffixList::parse("com\nnet").unwrap().snapshot("after")
+  let before = @moonsuffix.SuffixList::parse("com").unwrap().snapshot("before")
+  let after = @moonsuffix.SuffixList::parse("com\nnet")
+    .unwrap()
+    .snapshot("after")
   let duplicates = before.analyze_impact(
     after,
     ["api.net", "api.net"],
-    LookupOptions::strict_icann(),
+    @moonsuffix.LookupOptions::strict_icann(),
   )
   assert_eq(duplicates.changed_count(), 2)
   assert_eq(duplicates.impacts()[0].index(), 0)
   assert_eq(duplicates.impacts()[1].index(), 1)
-  let empty = before.analyze_impact(after, [], LookupOptions::strict_icann())
+  let empty = before.analyze_impact(
+    after,
+    [],
+    @moonsuffix.LookupOptions::strict_icann(),
+  )
   assert_eq(empty.scanned_count(), 0)
   assert_eq(empty.changed_count(), 0)
   assert_eq(empty.unchanged_count(), 0)
@@ -583,8 +605,8 @@ test "policy impact identifies strict ICANN migration changes" {
     [
       "alice.github.io", "service.internal", "api.com", "bad..com", "alice.github.io",
     ],
-    LookupOptions::browser_default(),
-    LookupOptions::strict_icann(),
+    @moonsuffix.LookupOptions::browser_default(),
+    @moonsuffix.LookupOptions::strict_icann(),
   )
   assert_eq(report.before_options().section_scope(), IcannAndPrivate)
   assert_eq(report.after_options().unknown_suffix_policy(), RequireListedSuffix)
@@ -611,15 +633,15 @@ test "policy impact records reverse acceptance and empty inventories" {
   let suffixes = sectioned_fixture()
   let reverse = suffixes.analyze_policy_impact(
     ["service.internal"],
-    LookupOptions::strict_icann(),
-    LookupOptions::browser_default(),
+    @moonsuffix.LookupOptions::strict_icann(),
+    @moonsuffix.LookupOptions::browser_default(),
   )
   assert_eq(reverse.changed_count(), 1)
   assert_eq(reverse.impacts()[0].kind(), BecameAccepted)
   let empty = suffixes.analyze_policy_impact(
     [],
-    LookupOptions::browser_default(),
-    LookupOptions::strict_icann(),
+    @moonsuffix.LookupOptions::browser_default(),
+    @moonsuffix.LookupOptions::strict_icann(),
   )
   assert_eq(empty.scanned_count(), 0)
   assert_eq(empty.changed_count(), 0)
@@ -652,7 +674,7 @@ test "private suffixes split sites unless policy excludes them" {
     suffixes.same_registrable_site_with_options(
       "alice.github.io",
       "bob.github.io",
-      LookupOptions::new(IcannOnly, UseDefaultWildcard),
+      @moonsuffix.LookupOptions::new(IcannOnly, UseDefaultWildcard),
     ),
     Ok(true),
   )
@@ -666,12 +688,12 @@ test "site keys reject public suffixes invalid domains and strict unknowns" {
   assert_eq(
     suffixes.site_key_with_options(
       "service.internal",
-      LookupOptions::strict_icann(),
+      @moonsuffix.LookupOptions::strict_icann(),
     ),
     Err(InvalidSiteDomain(UnlistedSuffix("service.internal"))),
   )
   assert_eq(
-    SiteError::NoRegistrableDomain("com").message(),
+    @moonsuffix.SiteError::NoRegistrableDomain("com").message(),
     "domain 'com' is a public suffix and has no registrable site",
   )
 }
@@ -727,7 +749,7 @@ test "cookie scopes handle public-suffix hosts and explicit policies" {
     .resolve_cookie_scope_with_options(
       "alice.github.io",
       Some("github.io"),
-      LookupOptions::new(IcannOnly, UseDefaultWildcard),
+      @moonsuffix.LookupOptions::new(IcannOnly, UseDefaultWildcard),
     )
     .unwrap()
   assert_eq(icann_only.domain(), "github.io")
