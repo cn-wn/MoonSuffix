@@ -160,6 +160,20 @@ a server-produced `Domain` value may not. Both inputs must already be DNS names
 in ASCII/A-label form. This API does not parse URLs, IP literals, Set-Cookie
 headers, Unicode IDNA input, paths, schemes, or cookie prefixes.
 
+## Native update audit
+
+`cmd/audit` is an I/O adapter over the portable snapshot APIs. It reads two
+caller-supplied PSL files and a line-oriented hostname inventory, creates
+revision-labelled snapshots, and emits one report containing summary counts,
+the semantic rule diff, and the changed-hostname CSV. It never downloads or
+bundles PSL data.
+
+Inventory lines are trimmed; blank lines and trimmed lines beginning with `#`
+are ignored. Every remaining hostname, including duplicates, keeps its source
+order. The report is assembled only from deterministic snapshot and impact
+outputs, so identical bytes, revision labels, inventory, and policy produce
+identical bytes on stdout.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map

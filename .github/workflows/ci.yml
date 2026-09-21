@@ -28,6 +28,9 @@ jobs:
       - name: Show toolchain version
         run: moon version --all
 
+      - name: Update MoonBit registry
+        run: moon update
+
       - name: Verify formatting
         run: |
           moon fmt
@@ -51,5 +54,21 @@ jobs:
       - name: Test JavaScript
         run: moon test --target js --deny-warn
 
+      - name: Check native audit command
+        run: moon check cmd/audit --target native --deny-warn
+
+      - name: Test native audit command
+        run: moon test cmd/audit --target native --deny-warn
+
       - name: Run documented example
         run: moon run cmd/main
+
+      - name: Run documented audit workflow
+        run: |
+          moon run --target native cmd/audit \
+            examples/audit/old.psl \
+            examples/audit/new.psl \
+            examples/audit/hosts.txt \
+            --from example-v1 \
+            --to example-v2 \
+            --strict-icann

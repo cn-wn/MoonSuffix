@@ -1,0 +1,3 @@
+user.github.io
+api.net
+api.example.com

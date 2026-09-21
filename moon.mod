@@ -12,6 +12,10 @@ keywords = [ "public-suffix", "domain", "etld", "cookie", "wasm" ]
 
 preferred_target = "wasm-gc"
 
-supported_targets = "+js+wasm+wasm-gc"
+supported_targets = "+js+wasm+wasm-gc+native"
 
 description = "A portable Public Suffix List engine for registrable-domain decisions in MoonBit."
+
+import {
+  "moonbitlang/async@0.22.1",
+}

@@ -10,7 +10,7 @@ It parses caller-supplied [Public Suffix List](https://publicsuffix.org/) text,
 implements exact, wildcard, exception, longest-rule, and implicit `*` behavior,
 recognizes the official ICANN and PRIVATE sections, and returns an explainable
 match. The reusable core has no file-system or network dependency and is
-designed for MoonBit's Wasm, Wasm-GC, and JavaScript targets.
+designed for MoonBit's Wasm, Wasm-GC, JavaScript, and native targets.
 
 ## Why this project exists
 
@@ -55,6 +55,27 @@ Run the included example:
 moon run cmd/main
 ```
 
+## Audit a PSL update
+
+The native audit command compares a deployed PSL with a candidate list, then
+evaluates an ordered hostname inventory against both snapshots:
+
+```text
+moon run --target native cmd/audit \
+  examples/audit/old.psl \
+  examples/audit/new.psl \
+  examples/audit/hosts.txt \
+  --from example-v1 \
+  --to example-v2 \
+  --strict-icann
+```
+
+It writes one deterministic report containing snapshot revisions and digests,
+semantic rule changes, summary counts, and CSV rows for hostnames whose lookup
+outcome changed. Blank inventory lines and lines beginning with `#` are ignored;
+remaining lines preserve their order and duplicates. The command only reads
+local files and does not fetch or redistribute PSL data.
+
 ## Current API
 
 - `SuffixList::parse` compiles PSL text into a reverse-label trie.
@@ -82,6 +103,8 @@ moon run cmd/main
 - `resolve_cookie_scope` converts an optional Cookie `Domain` attribute into its
   canonical stored domain and host-only flag, rejecting public-suffix scope
   escalation, unrelated domains, and malformed non-ASCII server values.
+- `cmd/audit` joins snapshots, semantic rule diffs, and hostname impact analysis
+  into a native, local-file workflow with deterministic text and CSV output.
 - `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains
   ordered mismatch diagnostics, and exports failures as deterministic CSV.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
@@ -118,6 +141,8 @@ moon test --target wasm --deny-warn
 moon test --target wasm-gc --deny-warn
 moon test --target js --deny-warn
 moon run cmd/main
+moon check cmd/audit --target native --deny-warn
+moon test cmd/audit --target native --deny-warn
 ```
 
 See [DESIGN.md](DESIGN.md), [ECOSYSTEM.md](ECOSYSTEM.md), and
