@@ -119,21 +119,31 @@ fn parse_audit_config(argv : ArrayView[String]) -> AuditConfig raise {
 }
 
 ///|
-fn parse_host_inventory(source : String) -> Array[String] {
+fn parse_host_inventory(source : String) -> Result[Array[String], String] {
   let hosts : Array[String] = []
+  let validator = @moonsuffix.SuffixList::parse("").unwrap()
+  let mut line_number = 0
   for line in source.split("\n") {
+    line_number = line_number + 1
     let host = line.trim().to_owned()
     if host != "" && !host.has_prefix("#") {
+      match validator.lookup(host) {
+        Ok(_) => ()
+        Err(error) =>
+          return Err(
+            "hostname inventory line \{line_number}: \{error.message()}",
+          )
+      }
       hosts.push(host)
     }
   }
-  hosts
+  Ok(hosts)
 }
 
 ///|
 /// Each non-comment line is a request host, optionally followed by one tab
 /// and a Cookie Domain attribute. One field means the attribute is absent;
-/// two fields preserve an explicitly empty attribute for row-level analysis.
+/// malformed hostnames and Domain values fail with their source line.
 fn parse_cookie_inventory(
   source : String,
 ) -> Result[Array[@moonsuffix.CookieScopeInput], String] {
@@ -160,7 +170,13 @@ fn parse_cookie_inventory(
       )
     }
     let attribute = if fields.length() == 2 { Some(fields[1]) } else { None }
-    inputs.push(@moonsuffix.CookieScopeInput::new(fields[0], attribute))
+    let input = @moonsuffix.CookieScopeInput::new(fields[0], attribute)
+    match input.validate_syntax() {
+      Ok(_) => ()
+      Err(error) =>
+        return Err("cookie inventory line \{line_number}: \{error.message()}")
+    }
+    inputs.push(input)
   }
   Ok(inputs)
 }
@@ -241,7 +257,10 @@ fn render_audit_report(
   cookie_inventory : String?,
   strict_icann : Bool,
 ) -> Result[AuditResult, String] {
-  let hosts = parse_host_inventory(host_inventory)
+  let hosts = match parse_host_inventory(host_inventory) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
   let options = if strict_icann {
     @moonsuffix.LookupOptions::strict_icann()
   } else {

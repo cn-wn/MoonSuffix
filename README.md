@@ -171,7 +171,9 @@ moon run --target native cmd/audit \
 The report adds Cookie counts and changed-row CSV only when the option is
 present. The gate fails if either a hostname or Cookie scope changes. These
 inputs cover the DNS domain component of Cookie storage, not path, expiry, or
-Secure; prepare Unicode names as A-labels before using this inventory.
+Secure; prepare Unicode names as A-labels before using this inventory. Hostnames
+rejected by the core lookup syntax and malformed ASCII Cookie DNS fields fail
+with their source line instead of being silently counted as unchanged.
 
 ## Current API
 
@@ -217,6 +219,8 @@ Secure; prepare Unicode names as A-labels before using this inventory.
 - `Snapshot::analyze_cookie_scope_impact` tests an ordered inventory of request
   hosts and Cookie `Domain` attributes against old and candidate PSL snapshots,
   reporting changed acceptance or stored scopes as deterministic CSV.
+- `CookieScopeInput::validate_syntax` checks ASCII request-host and `Domain`
+  syntax independently of PSL policy, for fail-closed inventory ingestion.
 - `cmd/audit` joins snapshots, semantic rule diffs, and hostname impact analysis
   into a native, local-file workflow with deterministic text and CSV output.
   It can verify stored bundles and audit an optional Cookie inventory;

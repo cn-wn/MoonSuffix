@@ -25,6 +25,28 @@ pub fn CookieScopeInput::domain_attribute(self : CookieScopeInput) -> String? {
 }
 
 ///|
+/// Check ASCII DNS syntax without consulting a PSL or applying lookup policy.
+/// A syntactically valid Domain attribute may still be rejected later because
+/// it is a public suffix or does not domain-match the request host.
+pub fn CookieScopeInput::validate_syntax(
+  self : CookieScopeInput,
+) -> Result[Unit, CookieScopeError] {
+  match canonical_request_host(self.request_host_) {
+    Ok(_) => ()
+    Err(error) => return Err(error)
+  }
+  match self.domain_attribute_ {
+    None => ()
+    Some(value) =>
+      match canonical_domain_attribute(value) {
+        Ok(_) => ()
+        Err(error) => return Err(error)
+      }
+  }
+  Ok(())
+}
+
+///|
 /// A behavioral change in Cookie domain acceptance or stored scope.
 pub(all) enum CookieScopeImpactKind {
   CookieBecameAccepted

@@ -165,6 +165,28 @@ jobs:
             exit 1
           fi
 
+      - name: Reject malformed audit inventories with source lines
+        run: |
+          diagnostic="$(mktemp)"
+          if moon run --target native cmd/audit \
+            examples/audit/old.psl examples/audit/new.psl \
+            examples/audit/invalid-hosts.txt \
+            --from example-v1 --to example-v2 > "$diagnostic" 2>&1; then
+            echo "malformed hostname inventory unexpectedly passed"
+            exit 1
+          fi
+          grep -q 'hostname inventory line 2:' "$diagnostic"
+          if moon run --target native cmd/audit \
+            examples/audit/old.psl examples/audit/new.psl \
+            examples/audit/stable-hosts.txt \
+            --from example-v1 --to example-v2 \
+            --cookie-inventory examples/audit/invalid-cookies.tsv \
+            > "$diagnostic" 2>&1; then
+            echo "malformed Cookie inventory unexpectedly passed"
+            exit 1
+          fi
+          grep -q 'cookie inventory line 2:' "$diagnostic"
+
       - name: Verify audit gate on unchanged snapshots
         run: |
           moon run --target native cmd/audit \

@@ -139,6 +139,7 @@ pub struct CookieScopeInput {
 pub fn CookieScopeInput::domain_attribute(Self) -> String?
 pub fn CookieScopeInput::new(String, String?) -> Self
 pub fn CookieScopeInput::request_host(Self) -> String
+pub fn CookieScopeInput::validate_syntax(Self) -> Result[Unit, CookieScopeError]
 
 pub(all) enum DomainError {
   EmptyDomain

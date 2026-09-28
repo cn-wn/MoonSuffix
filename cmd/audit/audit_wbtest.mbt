@@ -30,12 +30,19 @@ test "bundle audit mode reads revision labels from snapshots" {
 test "parse hostname inventories deterministically" {
   let hosts = parse_host_inventory(
     "\n # inventory\r\napi.example.com\r\n api.net \napi.example.com\n",
-  )
+  ).unwrap()
   assert_eq(hosts, ["api.example.com", "api.net", "api.example.com"])
+  assert_true(
+    parse_host_inventory("api.example.com\na..com\n") is Err(message) &&
+    message.has_prefix("hostname inventory line 2:"),
+  )
+  assert_eq(parse_host_inventory("商店.公司.cn\n").unwrap(), [
+    "商店.公司.cn",
+  ])
 }
 
 ///|
-test "parse optional Cookie inventory without losing absent or empty attributes" {
+test "parse optional Cookie inventory and reject malformed input with line numbers" {
   let config = parse_audit_config([
     "old.psl", "new.psl", "hosts.txt", "--from", "old", "--to", "new", "--cookie-inventory",
     "cookies.tsv",
@@ -43,14 +50,13 @@ test "parse optional Cookie inventory without losing absent or empty attributes"
   assert_eq(config.cookie_inventory_path, Some("cookies.tsv"))
   let inputs = parse_cookie_inventory(
     "# cookie cases\r\napi.example.com\r\nshop.example.com\texample.com\n" +
-    "shop.example.com\t\nshop.example.com\texample.com\n",
+    "shop.example.com\texample.com\n",
   ).unwrap()
-  assert_eq(inputs.length(), 4)
+  assert_eq(inputs.length(), 3)
   assert_eq(inputs[0].request_host(), "api.example.com")
   assert_eq(inputs[0].domain_attribute(), None)
   assert_eq(inputs[1].domain_attribute(), Some("example.com"))
-  assert_eq(inputs[2].domain_attribute(), Some(""))
-  assert_eq(inputs[3].domain_attribute(), Some("example.com"))
+  assert_eq(inputs[2].domain_attribute(), Some("example.com"))
   assert_true(
     parse_cookie_inventory("a.com\tb.com\textra")
     is Err(
@@ -58,6 +64,19 @@ test "parse optional Cookie inventory without losing absent or empty attributes"
     ),
   )
   assert_eq(parse_cookie_inventory("# empty\n").unwrap().length(), 0)
+  assert_true(
+    parse_cookie_inventory("api.example.com\nshop.example.com\t\n")
+    is Err(message) &&
+    message.has_prefix("cookie inventory line 2:"),
+  )
+  assert_true(
+    parse_cookie_inventory("shop..example.com\texample.com") is Err(message) &&
+    message.has_prefix("cookie inventory line 1:"),
+  )
+  assert_true(
+    parse_cookie_inventory("api.example.com\t例子.com") is Err(message) &&
+    message.has_prefix("cookie inventory line 1:"),
+  )
 }
 
 ///|

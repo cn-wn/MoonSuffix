@@ -16,6 +16,40 @@ fn cookie_impact_snapshots() -> (@moonsuffix.Snapshot, @moonsuffix.Snapshot) {
 }
 
 ///|
+test "Cookie inventory syntax validation is independent of PSL policy" {
+  let host_only = @moonsuffix.CookieScopeInput::new("WWW.Example.COM.", None)
+  assert_eq(host_only.validate_syntax(), Ok(()))
+  let domain = @moonsuffix.CookieScopeInput::new(
+    "shop.example.com",
+    Some(".EXAMPLE.COM"),
+  )
+  assert_eq(domain.validate_syntax(), Ok(()))
+  let public_suffix = @moonsuffix.CookieScopeInput::new(
+    "shop.example.com",
+    Some("com"),
+  )
+  assert_eq(public_suffix.validate_syntax(), Ok(()))
+  let mismatch = @moonsuffix.CookieScopeInput::new(
+    "shop.example.com",
+    Some("other.com"),
+  )
+  assert_eq(mismatch.validate_syntax(), Ok(()))
+  assert_true(
+    @moonsuffix.CookieScopeInput::new("a..example.com", None).validate_syntax()
+    is Err(InvalidRequestHost(_, _)),
+  )
+  assert_true(
+    @moonsuffix.CookieScopeInput::new("api.example.com", Some("")).validate_syntax()
+    is Err(InvalidDomainAttribute(_, _)),
+  )
+  assert_true(
+    @moonsuffix.CookieScopeInput::new("api.example.com", Some("例子.com")).validate_syntax()
+    is Err(InvalidDomainAttribute(_, _)),
+  )
+  assert_eq(domain.validate_syntax(), Ok(()))
+}
+
+///|
 test "Cookie scope audit classifies acceptance and host-only changes" {
   let (old, candidate) = cookie_impact_snapshots()
   let report = old.analyze_cookie_scope_impact(

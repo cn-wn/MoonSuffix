@@ -244,9 +244,12 @@ comparisons with caller-supplied revision labels.
 
 An optional tab-separated Cookie inventory extends the same audit. A line has
 one ASCII request host and optionally a second field containing the server's
-`Domain` attribute; absent and explicitly empty attributes remain distinct.
-Blank lines and `#` comments are ignored, CRLF is accepted, and extra fields
-are rejected with a source line number. The Cookie analysis uses the same two
+`Domain` attribute. Blank lines and `#` comments are ignored, CRLF is accepted,
+and extra fields or malformed DNS names are rejected with a source line number.
+The hostname inventory is likewise checked against the core lookup's hostname
+syntax before comparison, so a malformed name cannot silently count as an
+unchanged outcome. A valid name rejected by the selected PSL policy remains a
+normal audit outcome. The Cookie analysis uses the same two
 verified snapshots and lookup policy as the hostname analysis. Without this
 option the prior report bytes remain unchanged; with it, Cookie counts and a
 changed-row CSV are appended. `--fail-on-impact` then considers both hostname
