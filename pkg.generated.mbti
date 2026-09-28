@@ -194,6 +194,15 @@ pub fn RuleSection::equal(Self, Self) -> Bool
 pub fn RuleSection::not_equal(Self, Self) -> Bool
 pub fn RuleSection::to_repr(Self) -> @debug.Repr
 
+pub struct SchemefulSite {
+  scheme_ : String
+  registrable_domain_ : String
+}
+pub fn SchemefulSite::key(Self) -> String
+pub fn SchemefulSite::registrable_domain(Self) -> String
+pub fn SchemefulSite::same_site(Self, Self) -> Bool
+pub fn SchemefulSite::scheme(Self) -> String
+
 pub(all) enum SectionScope {
   IcannAndPrivate
   IcannOnly
@@ -205,6 +214,8 @@ pub fn SectionScope::to_repr(Self) -> @debug.Repr
 pub(all) enum SiteError {
   InvalidSiteDomain(DomainError)
   NoRegistrableDomain(String)
+  InvalidSiteScheme(String)
+  InvalidSiteHost(String, String)
 } derive(Eq, @debug.Debug)
 pub fn SiteError::equal(Self, Self) -> Bool
 pub fn SiteError::message(Self) -> String
@@ -313,6 +324,8 @@ pub fn SuffixList::resolve_cookie_scope_with_options(Self, String, String?, Look
 pub fn SuffixList::rule_count(Self) -> Int
 pub fn SuffixList::same_registrable_site(Self, String, String) -> Result[Bool, SiteError]
 pub fn SuffixList::same_registrable_site_with_options(Self, String, String, LookupOptions) -> Result[Bool, SiteError]
+pub fn SuffixList::schemeful_site(Self, String, String) -> Result[SchemefulSite, SiteError]
+pub fn SuffixList::schemeful_site_with_options(Self, String, String, LookupOptions) -> Result[SchemefulSite, SiteError]
 pub fn SuffixList::site_key(Self, String) -> Result[String, SiteError]
 pub fn SuffixList::site_key_with_options(Self, String, LookupOptions) -> Result[String, SiteError]
 pub fn SuffixList::snapshot(Self, String) -> Snapshot

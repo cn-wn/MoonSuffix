@@ -664,6 +664,66 @@ test "site keys compare registrable hostname boundaries" {
 }
 
 ///|
+test "schemeful sites compare scheme and registrable domain" {
+  let suffixes = sectioned_fixture()
+  let shop = suffixes.schemeful_site("HTTPS", "Shop.Example.COM.").unwrap()
+  let api = suffixes.schemeful_site("https", "api.example.com").unwrap()
+  let downgraded = suffixes.schemeful_site("http", "api.example.com").unwrap()
+  assert_eq(shop.scheme(), "https")
+  assert_eq(shop.registrable_domain(), "example.com")
+  assert_eq(shop.key(), "https://example.com")
+  assert_true(shop.same_site(api))
+  assert_true(!shop.same_site(downgraded))
+}
+
+///|
+test "schemeful sites honor private and strict ICANN policies" {
+  let suffixes = sectioned_fixture()
+  let alice = suffixes.schemeful_site("https", "alice.github.io").unwrap()
+  let bob = suffixes.schemeful_site("https", "bob.github.io").unwrap()
+  assert_true(!alice.same_site(bob))
+  let icann = @moonsuffix.LookupOptions::new(IcannOnly, UseDefaultWildcard)
+  let alice_icann = suffixes
+    .schemeful_site_with_options("https", "alice.github.io", icann)
+    .unwrap()
+  let bob_icann = suffixes
+    .schemeful_site_with_options("https", "bob.github.io", icann)
+    .unwrap()
+  assert_true(alice_icann.same_site(bob_icann))
+  assert_true(
+    suffixes.schemeful_site_with_options(
+      "https",
+      "api.unknown",
+      @moonsuffix.LookupOptions::strict_icann(),
+    )
+    is Err(InvalidSiteDomain(UnlistedSuffix(_))),
+  )
+}
+
+///|
+test "schemeful site construction rejects invalid web components" {
+  let suffixes = sectioned_fixture()
+  assert_true(
+    suffixes.schemeful_site("ftp", "api.example.com")
+    is Err(InvalidSiteScheme("ftp")),
+  )
+  assert_true(
+    suffixes.schemeful_site("https", "api..example.com")
+    is Err(InvalidSiteHost(_, _)),
+  )
+  assert_true(
+    suffixes.schemeful_site("https", "例子.com") is Err(InvalidSiteHost(_, _)),
+  )
+  assert_true(
+    suffixes.schemeful_site("https", "com") is Err(NoRegistrableDomain("com")),
+  )
+  assert_eq(
+    suffixes.schemeful_site("https", "api.example.com").unwrap().key(),
+    "https://example.com",
+  )
+}
+
+///|
 test "private suffixes split sites unless policy excludes them" {
   let suffixes = sectioned_fixture()
   assert_eq(

@@ -80,6 +80,12 @@ fn main {
     .same_registrable_site("www.example.com", "api.example.com.")
     .unwrap()
   println("same registrable site: \{related}")
+  let https_site = suffixes
+    .schemeful_site("https", "api.shop.example.com")
+    .unwrap()
+  let http_site = suffixes.schemeful_site("http", "www.example.com").unwrap()
+  println("schemeful site: \{https_site.key()}")
+  println("HTTP and HTTPS same-site: \{https_site.same_site(http_site)}")
   let conformance = suffixes
     .verify_psl_test_file(
       (

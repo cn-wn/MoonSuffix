@@ -70,6 +70,16 @@ Run this example with `moon run examples/idna`. Import
 `moonbit-community/idna`. The core package remains usable without importing
 that adapter.
 
+For HTTP site comparisons, pass already extracted scheme and ASCII hostname:
+
+```moonbit
+let first = suffixes.schemeful_site("https", "shop.example.com").unwrap()
+let second = suffixes.schemeful_site("https", "api.example.com").unwrap()
+let third = suffixes.schemeful_site("http", "api.example.com").unwrap()
+println(first.same_site(second)) // true
+println(first.same_site(third))  // false
+```
+
 ## Audit a PSL update
 
 The native audit command compares a deployed PSL with a candidate list, then
@@ -115,6 +125,8 @@ local files and does not fetch or redistribute PSL data.
   invalid hostnames as row-level errors; `BatchReport::to_csv` exports every row.
 - `site_key` and `same_registrable_site` expose canonical registrable-hostname
   boundaries for Cookie policy and hostname-level same-site integration.
+- `schemeful_site` creates an HTTP(S) site identity from an ASCII hostname and
+  compares both scheme and registrable domain, including PRIVATE PSL rules.
 - `resolve_cookie_scope` converts an optional Cookie `Domain` attribute into its
   canonical stored domain and host-only flag, rejecting public-suffix scope
   escalation, unrelated domains, and malformed non-ASCII server values.
@@ -144,8 +156,7 @@ local files and does not fetch or redistribute PSL data.
 
 ## Roadmap
 
-1. Add typed schemeful-site classification for already extracted URL components.
-2. Add a reproducible static PSL build path and benchmark lookup and startup.
+1. Add a reproducible static PSL build path and benchmark lookup and startup.
 
 ## Validation
 

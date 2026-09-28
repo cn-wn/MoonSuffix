@@ -125,9 +125,11 @@ variants allow applications to choose a different boundary deliberately.
 
 `same_registrable_site` compares these keys and validates the left hostname
 first. It intentionally answers only the hostname portion of a site identity.
-Applications implementing schemeful same-site behavior must parse and compare
-URL schemes separately, and Cookie Domain acceptance requires additional RFC
-6265 domain-matching rules.
+`schemeful_site` combines an HTTP(S) scheme with that key, so HTTP and HTTPS
+hosts are distinct even when they share a registrable domain. It accepts
+already extracted ASCII DNS hostnames, strips one root dot, and rejects invalid
+schemes and hosts. Ports and paths do not enter the site key. URL parsing and
+Cookie Domain acceptance remain separate concerns.
 
 ## Conformance verification
 

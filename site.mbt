@@ -3,6 +3,8 @@
 pub(all) enum SiteError {
   InvalidSiteDomain(DomainError)
   NoRegistrableDomain(String)
+  InvalidSiteScheme(String)
+  InvalidSiteHost(String, String)
 } derive(Eq, Debug)
 
 ///|
@@ -11,6 +13,84 @@ pub fn SiteError::message(self : SiteError) -> String {
     InvalidSiteDomain(error) => error.message()
     NoRegistrableDomain(domain) =>
       "domain '\{domain}' is a public suffix and has no registrable site"
+    InvalidSiteScheme(scheme) =>
+      "unsupported site scheme '\{scheme}': expected http or https"
+    InvalidSiteHost(host, reason) =>
+      "invalid site hostname '\{host}': \{reason}"
+  }
+}
+
+///|
+/// The scheme and registrable domain of a DNS-backed web site.
+///
+/// Ports and paths do not affect the site identity. The hostname must already
+/// be in ASCII/A-label form; use the IDNA adapter before constructing a site
+/// from a Unicode hostname.
+pub struct SchemefulSite {
+  scheme_ : String
+  registrable_domain_ : String
+}
+
+///|
+pub fn SchemefulSite::scheme(self : SchemefulSite) -> String {
+  self.scheme_
+}
+
+///|
+pub fn SchemefulSite::registrable_domain(self : SchemefulSite) -> String {
+  self.registrable_domain_
+}
+
+///|
+pub fn SchemefulSite::key(self : SchemefulSite) -> String {
+  self.scheme_ + "://" + self.registrable_domain_
+}
+
+///|
+pub fn SchemefulSite::same_site(
+  self : SchemefulSite,
+  other : SchemefulSite,
+) -> Bool {
+  self.scheme_ == other.scheme_ &&
+  self.registrable_domain_ == other.registrable_domain_
+}
+
+///|
+/// Construct a DNS-backed web site using browser-style PSL semantics.
+pub fn SuffixList::schemeful_site(
+  self : SuffixList,
+  scheme : String,
+  hostname : String,
+) -> Result[SchemefulSite, SiteError] {
+  self.schemeful_site_with_options(
+    scheme,
+    hostname,
+    LookupOptions::browser_default(),
+  )
+}
+
+///|
+/// Construct a web site under an explicit PSL section and fallback policy.
+/// Scheme is case-insensitive; only HTTP and HTTPS DNS hosts are supported.
+pub fn SuffixList::schemeful_site_with_options(
+  self : SuffixList,
+  scheme : String,
+  hostname : String,
+  options : LookupOptions,
+) -> Result[SchemefulSite, SiteError] {
+  let normalized_scheme = scheme.to_lower()
+  if normalized_scheme != "http" && normalized_scheme != "https" {
+    return Err(InvalidSiteScheme(scheme))
+  }
+  let host = remove_trailing_root_dot(hostname)
+  let ascii_host = match canonical_ascii_dns_name(host) {
+    Ok(value) => value
+    Err(reason) => return Err(InvalidSiteHost(hostname, reason))
+  }
+  match self.site_key_with_options(ascii_host, options) {
+    Ok(domain) =>
+      Ok({ scheme_: normalized_scheme, registrable_domain_: domain, })
+    Err(error) => Err(error)
   }
 }
 
