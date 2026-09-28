@@ -185,6 +185,12 @@ order. The report is assembled only from deterministic snapshot and impact
 outputs, so identical bytes, revision labels, inventory, and policy produce
 identical bytes on stdout.
 
+With `--fail-on-impact`, the command emits the same report and then exits
+unsuccessfully if any inventoried hostname has changed acceptance, public
+suffix, registrable boundary, or selected rule metadata. A semantic rule diff
+alone does not fail the gate: the gate is intentionally scoped to the supplied
+hostname inventory and chosen lookup policy.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map

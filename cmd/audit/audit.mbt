@@ -6,6 +6,13 @@ struct AuditConfig {
   from_revision : String
   to_revision : String
   strict_icann : Bool
+  fail_on_impact : Bool
+}
+
+///|
+struct AuditResult {
+  report : String
+  changed_count : Int
 }
 
 ///|
@@ -17,6 +24,10 @@ fn audit_command() -> @argparse.Command {
       @argparse.FlagArg(
         "strict-icann",
         about="Require listed ICANN suffixes and ignore PRIVATE rules",
+      ),
+      @argparse.FlagArg(
+        "fail-on-impact",
+        about="Exit nonzero when any inventoried hostname changes outcome",
       ),
     ],
     options=[
@@ -74,6 +85,7 @@ fn parse_audit_config(argv : ArrayView[String]) -> AuditConfig raise {
     from_revision,
     to_revision,
     strict_icann: matches.flags.get("strict-icann").unwrap_or(false),
+    fail_on_impact: matches.flags.get("fail-on-impact").unwrap_or(false),
   }
 }
 
@@ -108,7 +120,7 @@ fn build_audit_report(
   from_revision : String,
   to_revision : String,
   strict_icann : Bool,
-) -> Result[String, String] {
+) -> Result[AuditResult, String] {
   let old_suffixes = match parse_psl_for_audit("old", old_psl) {
     Ok(value) => value
     Err(error) => return Err(error)
@@ -140,5 +152,5 @@ fn build_audit_report(
   output.write_string(diff.report_text())
   output.write_string("hostname_impact_csv:\n")
   output.write_string(impact.to_csv())
-  Ok(output.to_string())
+  Ok({ report: output.to_string(), changed_count: impact.changed_count(), })
 }
