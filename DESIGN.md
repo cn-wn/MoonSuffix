@@ -70,6 +70,11 @@ separated by one blank line. `restore_bundle_text` delegates to the same strict
 manifest, digest, rule count, and canonical-text checks; it rejects truncated,
 modified, or appended data.
 
+The native `cmd/snapshot` command creates that artifact from a caller-supplied
+local PSL and revision. It verifies the in-memory bundle before writing and
+uses create-new file semantics so a second run cannot silently replace a pinned
+snapshot. It does not fetch PSL data.
+
 ## Why the data is injected
 
 The authoritative list changes several times per week and is separately

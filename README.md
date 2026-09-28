@@ -80,6 +80,21 @@ println(first.same_site(second)) // true
 println(first.same_site(third))  // false
 ```
 
+## Build a PSL snapshot
+
+Build a single-file snapshot from an explicitly chosen local PSL revision:
+
+```text
+moon run --target native cmd/snapshot \
+  examples/audit/old.psl \
+  old.snapshot \
+  --revision example-v1
+```
+
+The output includes canonical rules, revision, SHA-256 and rule count. The
+command verifies its own bundle before writing and refuses to replace an
+existing output file.
+
 ## Audit a PSL update
 
 The native audit command compares a deployed PSL with a candidate list, then
@@ -122,6 +137,8 @@ inventory passes; maintain an inventory representative of your deployment.
   field before reconstructing a trusted snapshot.
 - `Snapshot::bundle_text` and `restore_bundle_text` store the manifest and
   canonical rules in one strictly verified text artifact.
+- `cmd/snapshot` builds a single-file snapshot from a local PSL source and an
+  explicit revision without overwriting existing output.
 - `Snapshot::diff` produces deterministic additions, removals, and unambiguous
   ICANN/PRIVATE section moves between two snapshots.
 - `Snapshot::analyze_impact` evaluates a hostname inventory against old and new
@@ -179,6 +196,8 @@ moon run cmd/main
 moon run examples/idna
 moon check cmd/audit --target native --deny-warn
 moon test cmd/audit --target native --deny-warn
+moon check cmd/snapshot --target native --deny-warn
+moon test cmd/snapshot --target native --deny-warn
 ```
 
 See [DESIGN.md](DESIGN.md), [ECOSYSTEM.md](ECOSYSTEM.md), and

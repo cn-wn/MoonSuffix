@@ -60,11 +60,26 @@ jobs:
       - name: Test native audit command
         run: moon test cmd/audit --target native --deny-warn
 
+      - name: Check native snapshot command
+        run: moon check cmd/snapshot --target native --deny-warn
+
+      - name: Test native snapshot command
+        run: moon test cmd/snapshot --target native --deny-warn
+
       - name: Run documented example
         run: moon run cmd/main
 
       - name: Run Unicode hostname example
         run: moon run examples/idna
+
+      - name: Build a pinned snapshot
+        run: |
+          snapshot_dir="$(mktemp -d)"
+          moon run --target native cmd/snapshot \
+            examples/audit/old.psl \
+            "$snapshot_dir/old.snapshot" \
+            --revision example-v1
+          test -s "$snapshot_dir/old.snapshot"
 
       - name: Run documented audit workflow
         run: |
