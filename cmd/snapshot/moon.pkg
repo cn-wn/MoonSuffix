@@ -1,5 +1,6 @@
 import {
   "cn-wn/moonsuffix",
+  "cn-wn/moonsuffix/idna" @suffix_idna,
   "moonbitlang/core/argparse",
   "moonbitlang/core/env",
   "moonbitlang/async",

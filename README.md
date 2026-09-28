@@ -95,6 +95,15 @@ The output includes canonical rules, revision, SHA-256 and rule count. The
 command verifies its own bundle before writing and refuses to replace an
 existing output file.
 
+For a Unicode PSL source, pass `--idna`; the stored canonical rules use
+A-labels. For example:
+
+```text
+moon run --target native cmd/snapshot \
+  examples/idna/rules.psl unicode.snapshot \
+  --revision unicode-example-v1 --idna
+```
+
 ## Audit a PSL update
 
 The native audit command compares a deployed PSL with a candidate list, then
@@ -151,7 +160,8 @@ inventory passes; maintain an inventory representative of your deployment.
 - `Snapshot::bundle_text` and `restore_bundle_text` store the manifest and
   canonical rules in one strictly verified text artifact.
 - `cmd/snapshot` builds a single-file snapshot from a local PSL source and an
-  explicit revision without overwriting existing output.
+  explicit revision without overwriting existing output. Its `--idna` mode
+  normalizes Unicode rules to A-labels first.
 - `Snapshot::diff` produces deterministic additions, removals, and unambiguous
   ICANN/PRIVATE section moves between two snapshots.
 - `Snapshot::analyze_impact` evaluates a hostname inventory against old and new

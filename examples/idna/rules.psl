@@ -1,0 +1,5 @@
+// Small synthetic rule set for the IDNA snapshot example.
+// ===BEGIN ICANN DOMAINS===
+com
+公司.cn
+// ===END ICANN DOMAINS===

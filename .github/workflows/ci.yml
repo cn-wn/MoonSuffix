@@ -81,6 +81,16 @@ jobs:
             --revision example-v1
           test -s "$snapshot_dir/old.snapshot"
 
+      - name: Build a Unicode PSL snapshot
+        run: |
+          snapshot_dir="$(mktemp -d)"
+          moon run --target native cmd/snapshot \
+            examples/idna/rules.psl \
+            "$snapshot_dir/unicode.snapshot" \
+            --revision unicode-example-v1 \
+            --idna
+          grep -q 'xn--55qx5d.cn' "$snapshot_dir/unicode.snapshot"
+
       - name: Audit verified snapshot bundles
         run: |
           snapshot_dir="$(mktemp -d)"

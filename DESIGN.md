@@ -74,6 +74,8 @@ The native `cmd/snapshot` command creates that artifact from a caller-supplied
 local PSL and revision. It verifies the in-memory bundle before writing and
 uses create-new file semantics so a second run cannot silently replace a pinned
 snapshot. It does not fetch PSL data.
+Its optional `--idna` mode uses the same UTS #46 adapter as library lookups;
+the resulting bundle stores canonical A-label rules.
 
 ## Why the data is injected
 
