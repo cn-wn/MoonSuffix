@@ -66,6 +66,12 @@ jobs:
       - name: Test native snapshot command
         run: moon test cmd/snapshot --target native --deny-warn
 
+      - name: Check native lookup command
+        run: moon check cmd/lookup --target native --deny-warn
+
+      - name: Test native lookup command
+        run: moon test cmd/lookup --target native --deny-warn
+
       - name: Run documented example
         run: moon run cmd/main
 
@@ -90,6 +96,20 @@ jobs:
             --revision unicode-example-v1 \
             --idna
           grep -q 'xn--55qx5d.cn' "$snapshot_dir/unicode.snapshot"
+
+      - name: Query a verified Unicode snapshot
+        run: |
+          snapshot_dir="$(mktemp -d)"
+          moon run --target native cmd/snapshot \
+            examples/idna/rules.psl \
+            "$snapshot_dir/unicode.snapshot" \
+            --revision unicode-example-v1 \
+            --idna
+          moon run --target native cmd/lookup \
+            "$snapshot_dir/unicode.snapshot" \
+            商店.公司.cn \
+            --idna \
+            --strict-icann
 
       - name: Audit verified snapshot bundles
         run: |

@@ -104,6 +104,17 @@ moon run --target native cmd/snapshot \
   --revision unicode-example-v1 --idna
 ```
 
+Query a stored snapshot directly:
+
+```text
+moon run --target native cmd/lookup \
+  unicode.snapshot 商店.公司.cn --idna --strict-icann
+```
+
+The command verifies the bundle and prints its revision, digest, selected
+public suffix, registrable domain, and prevailing rule. Unicode input requires
+an A-label snapshot built with `--idna`.
+
 ## Audit a PSL update
 
 The native audit command compares a deployed PSL with a candidate list, then
@@ -162,6 +173,8 @@ inventory passes; maintain an inventory representative of your deployment.
 - `cmd/snapshot` builds a single-file snapshot from a local PSL source and an
   explicit revision without overwriting existing output. Its `--idna` mode
   normalizes Unicode rules to A-labels first.
+- `cmd/lookup` verifies a stored snapshot before classifying one hostname,
+  with optional IDNA and strict ICANN lookup policies.
 - `Snapshot::diff` produces deterministic additions, removals, and unambiguous
   ICANN/PRIVATE section moves between two snapshots.
 - `Snapshot::analyze_impact` evaluates a hostname inventory against old and new
@@ -222,6 +235,8 @@ moon check cmd/audit --target native --deny-warn
 moon test cmd/audit --target native --deny-warn
 moon check cmd/snapshot --target native --deny-warn
 moon test cmd/snapshot --target native --deny-warn
+moon check cmd/lookup --target native --deny-warn
+moon test cmd/lookup --target native --deny-warn
 ```
 
 See [DESIGN.md](DESIGN.md), [ECOSYSTEM.md](ECOSYSTEM.md), and

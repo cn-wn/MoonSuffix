@@ -77,6 +77,12 @@ snapshot. It does not fetch PSL data.
 Its optional `--idna` mode uses the same UTS #46 adapter as library lookups;
 the resulting bundle stores canonical A-label rules.
 
+The native `cmd/lookup` command restores and verifies a bundle before parsing
+its canonical rules for one lookup. It reports the manifest fields alongside
+the result so a human or CI log can attribute the answer to a specific rule
+set. Its optional IDNA mode normalizes the input hostname to match an A-label
+bundle; strict ICANN mode rejects unknown suffixes.
+
 ## Why the data is injected
 
 The authoritative list changes several times per week and is separately
