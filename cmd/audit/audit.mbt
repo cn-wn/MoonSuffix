@@ -3,6 +3,7 @@ struct AuditConfig {
   old_psl_path : String
   new_psl_path : String
   hosts_path : String
+  cookie_inventory_path : String?
   from_revision : String?
   to_revision : String?
   strict_icann : Bool
@@ -20,7 +21,7 @@ struct AuditResult {
 fn audit_command() -> @argparse.Command {
   @argparse.Command(
     "moonsuffix-audit",
-    about="Compare two PSL files and report hostname boundary changes",
+    about="Compare two PSL files and report hostname and Cookie-scope changes",
     flags=[
       @argparse.FlagArg(
         "strict-icann",
@@ -28,7 +29,7 @@ fn audit_command() -> @argparse.Command {
       ),
       @argparse.FlagArg(
         "fail-on-impact",
-        about="Exit nonzero when any inventoried hostname changes outcome",
+        about="Exit nonzero when an inventoried hostname or Cookie scope changes",
       ),
       @argparse.FlagArg(
         "bundles",
@@ -45,6 +46,11 @@ fn audit_command() -> @argparse.Command {
         "to-revision",
         long="to",
         about="Opaque revision label for the candidate PSL",
+      ),
+      @argparse.OptionArg(
+        "cookie-inventory",
+        long="cookie-inventory",
+        about="Optional tab-separated Cookie host and Domain inventory",
       ),
     ],
     positionals=[
@@ -87,6 +93,10 @@ fn parse_audit_config(argv : ArrayView[String]) -> AuditConfig raise {
     { "to-revision": [value], .. } => Some(value)
     _ => None
   }
+  let cookie_inventory_path = match matches.values {
+    { "cookie-inventory": [value], .. } => Some(value)
+    _ => None
+  }
   let bundles = matches.flags.get("bundles").unwrap_or(false)
   if bundles {
     if from_revision is Some(_) || to_revision is Some(_) {
@@ -99,6 +109,7 @@ fn parse_audit_config(argv : ArrayView[String]) -> AuditConfig raise {
     old_psl_path,
     new_psl_path,
     hosts_path,
+    cookie_inventory_path,
     from_revision,
     to_revision,
     strict_icann: matches.flags.get("strict-icann").unwrap_or(false),
@@ -120,6 +131,41 @@ fn parse_host_inventory(source : String) -> Array[String] {
 }
 
 ///|
+/// Each non-comment line is a request host, optionally followed by one tab
+/// and a Cookie Domain attribute. One field means the attribute is absent;
+/// two fields preserve an explicitly empty attribute for row-level analysis.
+fn parse_cookie_inventory(
+  source : String,
+) -> Result[Array[@moonsuffix.CookieScopeInput], String] {
+  let inputs : Array[@moonsuffix.CookieScopeInput] = []
+  let mut line_number = 0
+  for raw_line in source.split("\n") {
+    line_number = line_number + 1
+    let line = if raw_line.has_suffix("\r") {
+      raw_line[:raw_line.length() - 1].to_owned()
+    } else {
+      raw_line.to_owned()
+    }
+    let trimmed = line.trim()
+    if trimmed.length() == 0 || trimmed.has_prefix("#") {
+      continue
+    }
+    let fields : Array[String] = []
+    for field in line.split("\t") {
+      fields.push(field.to_owned())
+    }
+    if fields.length() > 2 {
+      return Err(
+        "cookie inventory line \{line_number}: expected a host and at most one Domain field",
+      )
+    }
+    let attribute = if fields.length() == 2 { Some(fields[1]) } else { None }
+    inputs.push(@moonsuffix.CookieScopeInput::new(fields[0], attribute))
+  }
+  Ok(inputs)
+}
+
+///|
 fn parse_psl_for_audit(
   label : String,
   source : String,
@@ -135,6 +181,7 @@ fn build_audit_report(
   old_psl : String,
   new_psl : String,
   host_inventory : String,
+  cookie_inventory : String?,
   from_revision : String,
   to_revision : String,
   strict_icann : Bool,
@@ -149,10 +196,8 @@ fn build_audit_report(
   }
   let old_snapshot = old_suffixes.snapshot(from_revision)
   let new_snapshot = new_suffixes.snapshot(to_revision)
-  Ok(
-    render_audit_report(
-      old_snapshot, new_snapshot, host_inventory, strict_icann,
-    ),
+  render_audit_report(
+    old_snapshot, new_snapshot, host_inventory, cookie_inventory, strict_icann,
   )
 }
 
@@ -172,6 +217,7 @@ fn build_bundle_audit_report(
   old_bundle : String,
   new_bundle : String,
   host_inventory : String,
+  cookie_inventory : String?,
   strict_icann : Bool,
 ) -> Result[AuditResult, String] {
   let old_snapshot = match parse_bundle_for_audit("old", old_bundle) {
@@ -182,10 +228,8 @@ fn build_bundle_audit_report(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  Ok(
-    render_audit_report(
-      old_snapshot, new_snapshot, host_inventory, strict_icann,
-    ),
+  render_audit_report(
+    old_snapshot, new_snapshot, host_inventory, cookie_inventory, strict_icann,
   )
 }
 
@@ -194,8 +238,9 @@ fn render_audit_report(
   old_snapshot : @moonsuffix.Snapshot,
   new_snapshot : @moonsuffix.Snapshot,
   host_inventory : String,
+  cookie_inventory : String?,
   strict_icann : Bool,
-) -> AuditResult {
+) -> Result[AuditResult, String] {
   let hosts = parse_host_inventory(host_inventory)
   let options = if strict_icann {
     @moonsuffix.LookupOptions::strict_icann()
@@ -217,5 +262,29 @@ fn render_audit_report(
   output.write_string(diff.report_text())
   output.write_string("hostname_impact_csv:\n")
   output.write_string(impact.to_csv())
-  { report: output.to_string(), changed_count: impact.changed_count(), }
+  let mut cookie_changed_count = 0
+  match cookie_inventory {
+    None => ()
+    Some(source) => {
+      let inputs = match parse_cookie_inventory(source) {
+        Ok(value) => value
+        Err(error) => return Err(error)
+      }
+      let cookie_impact = old_snapshot.analyze_cookie_scope_impact(
+        new_snapshot, inputs, options,
+      )
+      cookie_changed_count = cookie_impact.changed_count()
+      output.write_string("cookies_scanned=\{cookie_impact.scanned_count()}\n")
+      output.write_string("cookies_changed=\{cookie_changed_count}\n")
+      output.write_string(
+        "cookies_unchanged=\{cookie_impact.unchanged_count()}\n",
+      )
+      output.write_string("cookie_scope_impact_csv:\n")
+      output.write_string(cookie_impact.to_csv())
+    }
+  }
+  Ok({
+    report: output.to_string(),
+    changed_count: impact.changed_count() + cookie_changed_count,
+  })
 }

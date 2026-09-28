@@ -5,13 +5,24 @@ async fn main {
   let old_psl = @fs.read_file(config.old_psl_path).text()
   let new_psl = @fs.read_file(config.new_psl_path).text()
   let hosts = @fs.read_file(config.hosts_path).text()
+  let cookie_inventory = match config.cookie_inventory_path {
+    Some(path) => Some(@fs.read_file(path).text())
+    None => None
+  }
   let outcome = if config.bundles {
-    build_bundle_audit_report(old_psl, new_psl, hosts, config.strict_icann)
+    build_bundle_audit_report(
+      old_psl,
+      new_psl,
+      hosts,
+      cookie_inventory,
+      config.strict_icann,
+    )
   } else {
     build_audit_report(
       old_psl,
       new_psl,
       hosts,
+      cookie_inventory,
       config.from_revision.unwrap_or(""),
       config.to_revision.unwrap_or(""),
       config.strict_icann,
@@ -23,6 +34,6 @@ async fn main {
   }
   @stdio.stdout.write(result.report)
   if config.fail_on_impact && result.changed_count > 0 {
-    fail("PSL update changes \{result.changed_count} inventoried hostname(s)")
+    fail("PSL update changes \{result.changed_count} inventoried outcome(s)")
   }
 }

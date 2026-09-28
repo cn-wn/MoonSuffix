@@ -154,6 +154,25 @@ full report, then exits unsuccessfully if any hostname in the inventory has a
 changed lookup outcome. A rule-only change with no effect on the supplied
 inventory passes; maintain an inventory representative of your deployment.
 
+To audit Cookie storage as well, add a Cookie inventory. Each non-comment line
+contains an ASCII request host; an optional tab and second field specify the
+Cookie `Domain` attribute. A one-field line means that attribute is absent.
+For example, this invocation keeps the hostname inventory unchanged but finds
+three Cookie-scope changes and fails the upgrade gate:
+
+```text
+moon run --target native cmd/audit \
+  examples/audit/old.psl examples/audit/new.psl \
+  examples/audit/stable-hosts.txt \
+  --from example-v1 --to example-v2 --strict-icann \
+  --cookie-inventory examples/audit/cookies.tsv --fail-on-impact
+```
+
+The report adds Cookie counts and changed-row CSV only when the option is
+present. The gate fails if either a hostname or Cookie scope changes. These
+inputs cover the DNS domain component of Cookie storage, not path, expiry, or
+Secure; prepare Unicode names as A-labels before using this inventory.
+
 ## Current API
 
 - `SuffixList::parse` compiles PSL text into a reverse-label trie.
@@ -200,8 +219,8 @@ inventory passes; maintain an inventory representative of your deployment.
   reporting changed acceptance or stored scopes as deterministic CSV.
 - `cmd/audit` joins snapshots, semantic rule diffs, and hostname impact analysis
   into a native, local-file workflow with deterministic text and CSV output.
-  It can verify stored bundles, and `--fail-on-impact` can block a candidate
-  update in CI.
+  It can verify stored bundles and audit an optional Cookie inventory;
+  `--fail-on-impact` can block a candidate update in CI.
 - `idna` converts Unicode PSL rules and hostnames with UTS #46 before querying
   the core; returned domain strings are A-labels.
 - `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains

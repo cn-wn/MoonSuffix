@@ -139,6 +139,32 @@ jobs:
             --to example-v2 \
             --strict-icann
 
+      - name: Audit Cookie scopes and reject Cookie-only impact
+        run: |
+          report="$(mktemp)"
+          moon run --target native cmd/audit \
+            examples/audit/old.psl \
+            examples/audit/new.psl \
+            examples/audit/stable-hosts.txt \
+            --from example-v1 \
+            --to example-v2 \
+            --strict-icann \
+            --cookie-inventory examples/audit/cookies.tsv > "$report"
+          grep -q '^hosts_changed=0$' "$report"
+          grep -q '^cookies_changed=3$' "$report"
+          if moon run --target native cmd/audit \
+            examples/audit/old.psl \
+            examples/audit/new.psl \
+            examples/audit/stable-hosts.txt \
+            --from example-v1 \
+            --to example-v2 \
+            --strict-icann \
+            --cookie-inventory examples/audit/cookies.tsv \
+            --fail-on-impact; then
+            echo "Cookie-only audit gate unexpectedly accepted a changed inventory"
+            exit 1
+          fi
+
       - name: Verify audit gate on unchanged snapshots
         run: |
           moon run --target native cmd/audit \

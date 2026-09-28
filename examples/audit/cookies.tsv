@@ -1,0 +1,5 @@
+# request host, optionally followed by a tab and a Cookie Domain attribute
+alice.github.io	github.io
+github.io	github.io
+api.net
+api.example.com	example.com

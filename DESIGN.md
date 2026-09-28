@@ -242,6 +242,17 @@ report uses the stored revisions and refuses a damaged old or candidate file
 before evaluating any hostnames. Raw PSL mode remains available for exploratory
 comparisons with caller-supplied revision labels.
 
+An optional tab-separated Cookie inventory extends the same audit. A line has
+one ASCII request host and optionally a second field containing the server's
+`Domain` attribute; absent and explicitly empty attributes remain distinct.
+Blank lines and `#` comments are ignored, CRLF is accepted, and extra fields
+are rejected with a source line number. The Cookie analysis uses the same two
+verified snapshots and lookup policy as the hostname analysis. Without this
+option the prior report bytes remain unchanged; with it, Cookie counts and a
+changed-row CSV are appended. `--fail-on-impact` then considers both hostname
+and Cookie changes, allowing an unchanged host inventory to expose a Cookie
+storage regression.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map
