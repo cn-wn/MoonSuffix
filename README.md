@@ -193,6 +193,8 @@ inventory passes; maintain an inventory representative of your deployment.
 - `resolve_cookie_scope` converts an optional Cookie `Domain` attribute into its
   canonical stored domain and host-only flag, rejecting public-suffix scope
   escalation, unrelated domains, and malformed non-ASCII server values.
+- `CookieScope::matches_host` checks whether that stored domain scope covers a
+  later request hostname, distinguishing host-only and Domain cookies.
 - `cmd/audit` joins snapshots, semantic rule diffs, and hostname impact analysis
   into a native, local-file workflow with deterministic text and CSV output.
   It can verify stored bundles, and `--fail-on-impact` can block a candidate

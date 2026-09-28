@@ -78,6 +78,7 @@ pub struct CookieScope {
 pub fn CookieScope::domain(Self) -> String
 pub fn CookieScope::equal(Self, Self) -> Bool
 pub fn CookieScope::is_host_only(Self) -> Bool
+pub fn CookieScope::matches_host(Self, String) -> Result[Bool, CookieScopeError]
 pub fn CookieScope::not_equal(Self, Self) -> Bool
 pub fn CookieScope::to_repr(Self) -> @debug.Repr
 

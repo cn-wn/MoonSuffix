@@ -18,6 +18,26 @@ pub fn CookieScope::is_host_only(self : CookieScope) -> Bool {
 }
 
 ///|
+/// Test only the domain component of Cookie delivery to a request host.
+///
+/// A host-only cookie matches exactly one canonical DNS hostname. A Domain
+/// cookie also matches descendants at a label boundary. The caller must
+/// separately enforce path, Secure, expiration, and other Cookie attributes.
+pub fn CookieScope::matches_host(
+  self : CookieScope,
+  request_host : String,
+) -> Result[Bool, CookieScopeError] {
+  let host = match canonical_request_host(request_host) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  Ok(
+    host == self.domain_ ||
+    (!self.host_only_ && host.has_suffix("." + self.domain_)),
+  )
+}
+
+///|
 /// A request host or Domain attribute that cannot produce a safe cookie scope.
 pub(all) enum CookieScopeError {
   InvalidRequestHost(String, String)

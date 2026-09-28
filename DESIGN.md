@@ -198,6 +198,12 @@ a server-produced `Domain` value may not. Both inputs must already be DNS names
 in ASCII/A-label form. This API does not parse URLs, IP literals, Set-Cookie
 headers, Unicode IDNA input, paths, schemes, or cookie prefixes.
 
+After a scope is resolved, `CookieScope::matches_host` checks the domain part
+of delivery against another canonical ASCII request host. Host-only scopes
+require equality; Domain scopes allow equality or a descendant separated by
+a dot. Malformed target hosts return an error. Path, Secure, expiry, and other
+Cookie attributes remain the caller's responsibility.
+
 ## Native update audit
 
 `cmd/audit` is an I/O adapter over the portable snapshot APIs. It reads two
