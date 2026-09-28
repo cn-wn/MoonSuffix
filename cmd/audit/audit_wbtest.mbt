@@ -7,10 +7,21 @@ test "parse audit command arguments" {
   assert_eq(config.old_psl_path, "old.psl")
   assert_eq(config.new_psl_path, "new.psl")
   assert_eq(config.hosts_path, "hosts.txt")
-  assert_eq(config.from_revision, "release-1")
-  assert_eq(config.to_revision, "release-2")
+  assert_eq(config.from_revision, Some("release-1"))
+  assert_eq(config.to_revision, Some("release-2"))
   assert_true(config.strict_icann)
   assert_true(config.fail_on_impact)
+  assert_true(!config.bundles)
+}
+
+///|
+test "bundle audit mode reads revision labels from snapshots" {
+  let config = parse_audit_config([
+    "old.snapshot", "new.snapshot", "hosts.txt", "--bundles", "--strict-icann",
+  ])
+  assert_true(config.bundles)
+  assert_eq(config.from_revision, None)
+  assert_eq(config.to_revision, None)
 }
 
 ///|
@@ -78,6 +89,46 @@ test "audit gate counts only actual hostname effects" {
     old_psl, new_psl, "# no hosts\n", "old", "new", true,
   ).unwrap()
   assert_eq(empty.changed_count, 0)
+}
+
+///|
+test "stored bundle audit matches raw PSL audit" {
+  let old_psl = "com\n"
+  let new_psl = "com\nnet\n"
+  let old = @moonsuffix.SuffixList::parse(old_psl)
+    .unwrap()
+    .snapshot("release 1")
+    .bundle_text()
+  let new = @moonsuffix.SuffixList::parse(new_psl)
+    .unwrap()
+    .snapshot("release 2")
+    .bundle_text()
+  let bundled = build_bundle_audit_report(old, new, "api.net\n", true).unwrap()
+  let raw = build_audit_report(
+    old_psl, new_psl, "api.net\n", "release 1", "release 2", true,
+  ).unwrap()
+  assert_eq(bundled.report, raw.report)
+  assert_eq(bundled.changed_count, 1)
+}
+
+///|
+test "stored bundle audit rejects tampering before impact analysis" {
+  let valid = @moonsuffix.SuffixList::parse("com\n")
+    .unwrap()
+    .snapshot("v1")
+    .bundle_text()
+  assert_true(
+    build_bundle_audit_report("broken", valid, "api.com", false) is Err(message) &&
+    message.has_prefix("old snapshot:"),
+  )
+  assert_true(
+    build_bundle_audit_report(valid, "broken", "api.com", false) is Err(message) &&
+    message.has_prefix("candidate snapshot:"),
+  )
+  assert_eq(
+    build_bundle_audit_report(valid, valid, "api.com", false).unwrap().changed_count,
+    0,
+  )
 }
 
 ///|

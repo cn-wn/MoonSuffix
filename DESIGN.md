@@ -201,6 +201,11 @@ suffix, registrable boundary, or selected rule metadata. A semantic rule diff
 alone does not fail the gate: the gate is intentionally scoped to the supplied
 hostname inventory and chosen lookup policy.
 
+Bundle mode first calls `Snapshot::restore_bundle_text` for each input. The
+report uses the stored revisions and refuses a damaged old or candidate file
+before evaluating any hostnames. Raw PSL mode remains available for exploratory
+comparisons with caller-supplied revision labels.
+
 ## Complexity
 
 Parsing is linear in the total number of labels inserted, aside from hash-map

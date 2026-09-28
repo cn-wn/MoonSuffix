@@ -116,6 +116,19 @@ outcome changed. Blank inventory lines and lines beginning with `#` are ignored;
 remaining lines preserve their order and duplicates. The command only reads
 local files and does not fetch or redistribute PSL data.
 
+To audit pinned bundles, build an old and candidate snapshot with
+`cmd/snapshot`, then run:
+
+```text
+moon run --target native cmd/audit \
+  old.snapshot new.snapshot examples/audit/hosts.txt \
+  --bundles --strict-icann --fail-on-impact
+```
+
+Bundle mode verifies both files before comparing them and reads revision labels
+from their manifests. The `--from` and `--to` options apply only to raw PSL
+inputs.
+
 Add `--fail-on-impact` to use it as an upgrade gate in CI. It still prints the
 full report, then exits unsuccessfully if any hostname in the inventory has a
 changed lookup outcome. A rule-only change with no effect on the supplied
@@ -156,7 +169,8 @@ inventory passes; maintain an inventory representative of your deployment.
   escalation, unrelated domains, and malformed non-ASCII server values.
 - `cmd/audit` joins snapshots, semantic rule diffs, and hostname impact analysis
   into a native, local-file workflow with deterministic text and CSV output.
-  Its `--fail-on-impact` flag can block a candidate update in CI.
+  It can verify stored bundles, and `--fail-on-impact` can block a candidate
+  update in CI.
 - `idna` converts Unicode PSL rules and hostnames with UTS #46 before querying
   the core; returned domain strings are A-labels.
 - `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains

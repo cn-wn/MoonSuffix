@@ -3,10 +3,11 @@ struct AuditConfig {
   old_psl_path : String
   new_psl_path : String
   hosts_path : String
-  from_revision : String
-  to_revision : String
+  from_revision : String?
+  to_revision : String?
   strict_icann : Bool
   fail_on_impact : Bool
+  bundles : Bool
 }
 
 ///|
@@ -29,30 +30,32 @@ fn audit_command() -> @argparse.Command {
         "fail-on-impact",
         about="Exit nonzero when any inventoried hostname changes outcome",
       ),
+      @argparse.FlagArg(
+        "bundles",
+        about="Read and verify versioned snapshot bundles instead of raw PSL files",
+      ),
     ],
     options=[
       @argparse.OptionArg(
         "from-revision",
         long="from",
         about="Opaque revision label for the old PSL",
-        required=true,
       ),
       @argparse.OptionArg(
         "to-revision",
         long="to",
         about="Opaque revision label for the candidate PSL",
-        required=true,
       ),
     ],
     positionals=[
       @argparse.PositionArg(
         "old-psl",
-        about="Path to the currently deployed PSL file",
+        about="Path to the deployed PSL or snapshot bundle",
         num_args=@argparse.ValueRange::single(),
       ),
       @argparse.PositionArg(
         "new-psl",
-        about="Path to the candidate PSL file",
+        about="Path to the candidate PSL or snapshot bundle",
         num_args=@argparse.ValueRange::single(),
       ),
       @argparse.PositionArg(
@@ -72,11 +75,25 @@ fn parse_audit_config(argv : ArrayView[String]) -> AuditConfig raise {
       "old-psl": [old_psl_path],
       "new-psl": [new_psl_path],
       "hosts": [hosts_path],
-      "from-revision": [from_revision],
-      "to-revision": [to_revision],
       ..
     } else {
     fail("missing required audit input")
+  }
+  let from_revision = match matches.values {
+    { "from-revision": [value], .. } => Some(value)
+    _ => None
+  }
+  let to_revision = match matches.values {
+    { "to-revision": [value], .. } => Some(value)
+    _ => None
+  }
+  let bundles = matches.flags.get("bundles").unwrap_or(false)
+  if bundles {
+    if from_revision is Some(_) || to_revision is Some(_) {
+      fail("--from and --to are stored in bundles and must be omitted")
+    }
+  } else if from_revision is None || to_revision is None {
+    fail("raw PSL inputs require --from and --to revision labels")
   }
   {
     old_psl_path,
@@ -86,6 +103,7 @@ fn parse_audit_config(argv : ArrayView[String]) -> AuditConfig raise {
     to_revision,
     strict_icann: matches.flags.get("strict-icann").unwrap_or(false),
     fail_on_impact: matches.flags.get("fail-on-impact").unwrap_or(false),
+    bundles,
   }
 }
 
@@ -129,9 +147,56 @@ fn build_audit_report(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let hosts = parse_host_inventory(host_inventory)
   let old_snapshot = old_suffixes.snapshot(from_revision)
   let new_snapshot = new_suffixes.snapshot(to_revision)
+  Ok(
+    render_audit_report(
+      old_snapshot, new_snapshot, host_inventory, strict_icann,
+    ),
+  )
+}
+
+///|
+fn parse_bundle_for_audit(
+  label : String,
+  source : String,
+) -> Result[@moonsuffix.Snapshot, String] {
+  match @moonsuffix.Snapshot::restore_bundle_text(source) {
+    Ok(snapshot) => Ok(snapshot)
+    Err(error) => Err("\{label} snapshot: \{error.message()}")
+  }
+}
+
+///|
+fn build_bundle_audit_report(
+  old_bundle : String,
+  new_bundle : String,
+  host_inventory : String,
+  strict_icann : Bool,
+) -> Result[AuditResult, String] {
+  let old_snapshot = match parse_bundle_for_audit("old", old_bundle) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let new_snapshot = match parse_bundle_for_audit("candidate", new_bundle) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  Ok(
+    render_audit_report(
+      old_snapshot, new_snapshot, host_inventory, strict_icann,
+    ),
+  )
+}
+
+///|
+fn render_audit_report(
+  old_snapshot : @moonsuffix.Snapshot,
+  new_snapshot : @moonsuffix.Snapshot,
+  host_inventory : String,
+  strict_icann : Bool,
+) -> AuditResult {
+  let hosts = parse_host_inventory(host_inventory)
   let options = if strict_icann {
     @moonsuffix.LookupOptions::strict_icann()
   } else {
@@ -152,5 +217,5 @@ fn build_audit_report(
   output.write_string(diff.report_text())
   output.write_string("hostname_impact_csv:\n")
   output.write_string(impact.to_csv())
-  Ok({ report: output.to_string(), changed_count: impact.changed_count(), })
+  { report: output.to_string(), changed_count: impact.changed_count(), }
 }

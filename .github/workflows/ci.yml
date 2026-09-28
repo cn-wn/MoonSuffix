@@ -81,6 +81,24 @@ jobs:
             --revision example-v1
           test -s "$snapshot_dir/old.snapshot"
 
+      - name: Audit verified snapshot bundles
+        run: |
+          snapshot_dir="$(mktemp -d)"
+          moon run --target native cmd/snapshot \
+            examples/audit/old.psl \
+            "$snapshot_dir/old.snapshot" \
+            --revision example-v1
+          moon run --target native cmd/snapshot \
+            examples/audit/new.psl \
+            "$snapshot_dir/new.snapshot" \
+            --revision example-v2
+          moon run --target native cmd/audit \
+            "$snapshot_dir/old.snapshot" \
+            "$snapshot_dir/new.snapshot" \
+            examples/audit/hosts.txt \
+            --bundles \
+            --strict-icann
+
       - name: Run documented audit workflow
         run: |
           moon run --target native cmd/audit \

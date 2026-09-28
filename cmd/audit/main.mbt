@@ -5,15 +5,19 @@ async fn main {
   let old_psl = @fs.read_file(config.old_psl_path).text()
   let new_psl = @fs.read_file(config.new_psl_path).text()
   let hosts = @fs.read_file(config.hosts_path).text()
-  let result = match
+  let outcome = if config.bundles {
+    build_bundle_audit_report(old_psl, new_psl, hosts, config.strict_icann)
+  } else {
     build_audit_report(
       old_psl,
       new_psl,
       hosts,
-      config.from_revision,
-      config.to_revision,
+      config.from_revision.unwrap_or(""),
+      config.to_revision.unwrap_or(""),
       config.strict_icann,
-    ) {
+    )
+  }
+  let result = match outcome {
     Ok(value) => value
     Err(error) => fail(error)
   }
