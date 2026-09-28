@@ -229,10 +229,12 @@ pub struct Snapshot {
   rule_count_ : Int
 }
 pub fn Snapshot::analyze_impact(Self, Self, Array[String], LookupOptions) -> SnapshotImpact
+pub fn Snapshot::bundle_text(Self) -> String
 pub fn Snapshot::diff(Self, Self) -> SnapshotDiff
 pub fn Snapshot::manifest_text(Self) -> String
 pub fn Snapshot::psl_text(Self) -> String
 pub fn Snapshot::restore(String, String) -> Result[Self, SnapshotLoadError]
+pub fn Snapshot::restore_bundle_text(String) -> Result[Self, SnapshotLoadError]
 pub fn Snapshot::rule_count(Self) -> Int
 pub fn Snapshot::sha256(Self) -> String
 pub fn Snapshot::source_revision(Self) -> String

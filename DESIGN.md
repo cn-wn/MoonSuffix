@@ -65,6 +65,11 @@ percent-encoding and decimal forms, lowercase SHA-256 text, valid canonical PSL
 bytes, and matching digest and rule count. A restored snapshot therefore has
 the same invariants as one created in memory.
 
+`bundle_text` packages that manifest and canonical PSL into one text artifact,
+separated by one blank line. `restore_bundle_text` delegates to the same strict
+manifest, digest, rule count, and canonical-text checks; it rejects truncated,
+modified, or appended data.
+
 ## Why the data is injected
 
 The authoritative list changes several times per week and is separately

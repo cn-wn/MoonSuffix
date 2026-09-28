@@ -120,6 +120,8 @@ inventory passes; maintain an inventory representative of your deployment.
   digest, its rule count, and a deterministic line-oriented manifest.
 - `Snapshot::restore` verifies stored canonical PSL text against every manifest
   field before reconstructing a trusted snapshot.
+- `Snapshot::bundle_text` and `restore_bundle_text` store the manifest and
+  canonical rules in one strictly verified text artifact.
 - `Snapshot::diff` produces deterministic additions, removals, and unambiguous
   ICANN/PRIVATE section moves between two snapshots.
 - `Snapshot::analyze_impact` evaluates a hostname inventory against old and new

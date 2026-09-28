@@ -282,6 +282,53 @@ test "restore verifies and round trips a stored snapshot" {
 }
 
 ///|
+test "single-file snapshot bundles restore byte-for-byte" {
+  let original = @moonsuffix.SuffixList::parse("公司.cn\ncom\n")
+    .unwrap()
+    .snapshot("revision 2026/秋")
+  let bundle = original.bundle_text()
+  let restored = @moonsuffix.Snapshot::restore_bundle_text(bundle).unwrap()
+  assert_eq(restored.bundle_text(), bundle)
+  assert_eq(restored.sha256(), original.sha256())
+  assert_eq(restored.source_revision(), original.source_revision())
+  assert_eq(restored.rule_count(), 2)
+  assert_eq(restored.psl_text(), original.psl_text())
+  let empty = @moonsuffix.SuffixList::parse("").unwrap().snapshot("empty")
+  assert_eq(
+    @moonsuffix.Snapshot::restore_bundle_text(empty.bundle_text())
+    .unwrap()
+    .bundle_text(),
+    empty.bundle_text(),
+  )
+}
+
+///|
+test "single-file snapshot bundles reject damaged content" {
+  let original = @moonsuffix.SuffixList::parse("com\n").unwrap().snapshot("v1")
+  let bundle = original.bundle_text()
+  assert_true(
+    @moonsuffix.Snapshot::restore_bundle_text(
+      bundle.replace(old="com\n", new="net\n"),
+    )
+    is Err(DigestMismatch(_, _)),
+  )
+  assert_true(
+    @moonsuffix.Snapshot::restore_bundle_text(bundle + "extra")
+    is Err(NonCanonicalPsl),
+  )
+  assert_true(
+    @moonsuffix.Snapshot::restore_bundle_text("format=moonsuffix-snapshot-v1\n")
+    is Err(InvalidManifest("missing bundle separator")),
+  )
+  assert_eq(
+    @moonsuffix.Snapshot::restore_bundle_text(original.bundle_text())
+    .unwrap()
+    .sha256(),
+    original.sha256(),
+  )
+}
+
+///|
 test "restore rejects malformed and noncanonical snapshot inputs" {
   let snapshot = @moonsuffix.SuffixList::parse("com\norg")
     .unwrap()
