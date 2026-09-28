@@ -55,6 +55,21 @@ Run the included example:
 moon run cmd/main
 ```
 
+For Unicode hostnames, use the separate IDNA adapter so PSL rules and input
+hostnames are converted to the same A-label form:
+
+```moonbit
+let list = @suffix_idna.parse_psl("公司.cn\ncom\n").unwrap()
+let result = @suffix_idna.lookup(list, "商店.公司.cn").unwrap()
+println(result.public_suffix()) // xn--55qx5d.cn
+println(result.registrable_domain().unwrap()) // xn--czrs0t.xn--55qx5d.cn
+```
+
+Run this example with `moon run examples/idna`. Import
+`cn-wn/moonsuffix/idna` as `suffix_idna`; it depends on
+`moonbit-community/idna`. The core package remains usable without importing
+that adapter.
+
 ## Audit a PSL update
 
 The native audit command compares a deployed PSL with a candidate list, then
@@ -105,6 +120,8 @@ local files and does not fetch or redistribute PSL data.
   escalation, unrelated domains, and malformed non-ASCII server values.
 - `cmd/audit` joins snapshots, semantic rule diffs, and hostname impact analysis
   into a native, local-file workflow with deterministic text and CSV output.
+- `idna` converts Unicode PSL rules and hostnames with UTS #46 before querying
+  the core; returned domain strings are A-labels.
 - `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains
   ordered mismatch diagnostics, and exports failures as deterministic CSV.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
@@ -119,17 +136,16 @@ local files and does not fetch or redistribute PSL data.
   list, so data freshness and MPL-2.0 obligations remain explicit.
 - Snapshot revision labels are supplied by the caller. SHA-256 detects canonical
   content changes but does not authenticate the source or fetch upstream data.
-- Inputs and list rules are lowercased, but MoonSuffix does not yet convert
-  between Unicode U-labels and Punycode A-labels. Callers must canonicalize both
-  to the same representation before parsing and lookup.
+- The core lowercases rules and hostnames but does not perform IDNA conversion.
+  Use the separate `idna` adapter for Unicode input; its results are ASCII
+  A-labels and do not preserve the original display spelling.
 - Callers must extract a hostname before lookup; URLs and IP literals are outside
   this API's input contract.
 
 ## Roadmap
 
-1. Add an adapter for the maintained MoonBit UTS #46 / IDNA implementation and
-   run the complete upstream Unicode/Punycode conformance cases.
-2. Add URL adapters for schemeful same-site and complete Set-Cookie parsing.
+1. Add typed schemeful-site classification for already extracted URL components.
+2. Add a reproducible static PSL build path and benchmark lookup and startup.
 
 ## Validation
 
@@ -141,6 +157,7 @@ moon test --target wasm --deny-warn
 moon test --target wasm-gc --deny-warn
 moon test --target js --deny-warn
 moon run cmd/main
+moon run examples/idna
 moon check cmd/audit --target native --deny-warn
 moon test cmd/audit --target native --deny-warn
 ```

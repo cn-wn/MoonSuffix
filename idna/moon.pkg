@@ -1,0 +1,4 @@
+import {
+  "cn-wn/moonsuffix",
+  "moonbit-community/idna" @unicode_idna,
+}

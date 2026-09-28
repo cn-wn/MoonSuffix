@@ -20,6 +20,11 @@ The private SHA-256 implementation used for snapshot digests follows FIPS
 180-4. Its tests include the standard empty, short, and multi-block message
 vectors; no cryptographic implementation source code was copied.
 
+The optional `idna` adapter depends on
+[`moonbit-community/idna`](https://mooncakes.io/docs/moonbit-community/idna)
+(Apache-2.0) for UTS #46 conversion. MoonSuffix does not copy its source or
+Unicode data tables.
+
 ## Tests
 
 Selected semantic scenarios in `moonsuffix_test.mbt` are adapted into MoonBit

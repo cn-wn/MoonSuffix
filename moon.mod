@@ -18,4 +18,5 @@ description = "A portable Public Suffix List engine for registrable-domain decis
 
 import {
   "moonbitlang/async@0.22.1",
+  "moonbit-community/idna@0.5.2",
 }

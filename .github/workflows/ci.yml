@@ -63,6 +63,9 @@ jobs:
       - name: Run documented example
         run: moon run cmd/main
 
+      - name: Run Unicode hostname example
+        run: moon run examples/idna
+
       - name: Run documented audit workflow
         run: |
           moon run --target native cmd/audit \

@@ -74,6 +74,15 @@ the engine and data lifecycle separate: callers supply text and the snapshot API
 records their chosen revision and canonical digest without bundling upstream
 data.
 
+## IDNA adapter
+
+The `idna` package converts both PSL rules and lookup hostnames to ASCII
+using `moonbit-community/idna`'s UTS #46 implementation. It preserves section
+markers and exact, wildcard, and exception rule prefixes. Conversion errors
+identify the source rule line or input hostname. The core keeps its existing
+case-only behavior for callers with already canonicalized input. IDNA adapter
+lookups return A-labels, which are safe to compare and store as stable keys.
+
 ## Snapshot comparison
 
 `Snapshot::diff` compares canonical rule identities as `(rule, section)` pairs.

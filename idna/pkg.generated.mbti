@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "cn-wn/moonsuffix/idna"
+
+import {
+  "cn-wn/moonsuffix",
+}
+
+// Values
+pub fn lookup(@moonsuffix.SuffixList, String) -> Result[@moonsuffix.Lookup, IdnaLookupError]
+
+pub fn lookup_with_options(@moonsuffix.SuffixList, String, @moonsuffix.LookupOptions) -> Result[@moonsuffix.Lookup, IdnaLookupError]
+
+pub fn parse_psl(String) -> Result[@moonsuffix.SuffixList, IdnaPslError]
+
+// Errors
+
+// Types and methods
+pub(all) enum IdnaLookupError {
+  InvalidHostname(String, String)
+  InvalidDomain(@moonsuffix.DomainError)
+}
+pub fn IdnaLookupError::message(Self) -> String
+
+pub(all) enum IdnaPslError {
+  InvalidRuleName(Int, String, String)
+  InvalidPsl(@moonsuffix.ListParseError)
+}
+pub fn IdnaPslError::message(Self) -> String
+
+// Type aliases
+
+// Traits
