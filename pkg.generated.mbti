@@ -93,6 +93,53 @@ pub fn CookieScopeError::message(Self) -> String
 pub fn CookieScopeError::not_equal(Self, Self) -> Bool
 pub fn CookieScopeError::to_repr(Self) -> @debug.Repr
 
+pub struct CookieScopeImpact {
+  index_ : Int
+  input_ : CookieScopeInput
+  kind_ : CookieScopeImpactKind
+  before_ : Result[CookieScope, CookieScopeError]
+  after_ : Result[CookieScope, CookieScopeError]
+}
+pub fn CookieScopeImpact::after(Self) -> Result[CookieScope, CookieScopeError]
+pub fn CookieScopeImpact::before(Self) -> Result[CookieScope, CookieScopeError]
+pub fn CookieScopeImpact::index(Self) -> Int
+pub fn CookieScopeImpact::input(Self) -> CookieScopeInput
+pub fn CookieScopeImpact::kind(Self) -> CookieScopeImpactKind
+
+pub(all) enum CookieScopeImpactKind {
+  CookieBecameAccepted
+  CookieBecameRejected
+  CookieScopeChanged
+}
+
+pub struct CookieScopeImpactReport {
+  from_revision_ : String
+  to_revision_ : String
+  from_sha256_ : String
+  to_sha256_ : String
+  scanned_count_ : Int
+  unchanged_count_ : Int
+  impacts_ : ReadOnlyArray[CookieScopeImpact]
+}
+pub fn CookieScopeImpactReport::changed_count(Self) -> Int
+pub fn CookieScopeImpactReport::from_revision(Self) -> String
+pub fn CookieScopeImpactReport::from_sha256(Self) -> String
+pub fn CookieScopeImpactReport::impacts(Self) -> ReadOnlyArray[CookieScopeImpact]
+pub fn CookieScopeImpactReport::is_empty(Self) -> Bool
+pub fn CookieScopeImpactReport::scanned_count(Self) -> Int
+pub fn CookieScopeImpactReport::to_csv(Self) -> String
+pub fn CookieScopeImpactReport::to_revision(Self) -> String
+pub fn CookieScopeImpactReport::to_sha256(Self) -> String
+pub fn CookieScopeImpactReport::unchanged_count(Self) -> Int
+
+pub struct CookieScopeInput {
+  request_host_ : String
+  domain_attribute_ : String?
+}
+pub fn CookieScopeInput::domain_attribute(Self) -> String?
+pub fn CookieScopeInput::new(String, String?) -> Self
+pub fn CookieScopeInput::request_host(Self) -> String
+
 pub(all) enum DomainError {
   EmptyDomain
   EmptyLabel(Int)
@@ -249,6 +296,7 @@ pub struct Snapshot {
   sha256_ : String
   rule_count_ : Int
 }
+pub fn Snapshot::analyze_cookie_scope_impact(Self, Self, Array[CookieScopeInput], LookupOptions) -> CookieScopeImpactReport
 pub fn Snapshot::analyze_impact(Self, Self, Array[String], LookupOptions) -> SnapshotImpact
 pub fn Snapshot::bundle_text(Self) -> String
 pub fn Snapshot::diff(Self, Self) -> SnapshotDiff

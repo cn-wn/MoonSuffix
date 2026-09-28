@@ -195,6 +195,9 @@ inventory passes; maintain an inventory representative of your deployment.
   escalation, unrelated domains, and malformed non-ASCII server values.
 - `CookieScope::matches_host` checks whether that stored domain scope covers a
   later request hostname, distinguishing host-only and Domain cookies.
+- `Snapshot::analyze_cookie_scope_impact` tests an ordered inventory of request
+  hosts and Cookie `Domain` attributes against old and candidate PSL snapshots,
+  reporting changed acceptance or stored scopes as deterministic CSV.
 - `cmd/audit` joins snapshots, semantic rule diffs, and hostname impact analysis
   into a native, local-file workflow with deterministic text and CSV output.
   It can verify stored bundles, and `--fail-on-impact` can block a candidate

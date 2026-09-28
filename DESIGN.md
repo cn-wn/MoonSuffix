@@ -204,6 +204,19 @@ require equality; Domain scopes allow equality or a descendant separated by
 a dot. Malformed target hosts return an error. Path, Secure, expiry, and other
 Cookie attributes remain the caller's responsibility.
 
+## Cookie scope update audit
+
+`Snapshot::analyze_cookie_scope_impact` replays an ordered inventory of request
+host and optional `Domain` attribute pairs through the Cookie scope resolver
+under two pinned PSL snapshots. It classifies newly accepted and rejected
+inputs, plus changes to the stored domain or host-only flag. Two rejections
+remain behaviorally unchanged even if their error messages differ. Invalid
+rows do not stop later rows; duplicates keep their original indexes. Changed
+rows can be exported as deterministic, fully quoted CSV with a presence flag
+that distinguishes a missing `Domain` attribute from an empty one. This audits
+the DNS domain component of Cookie storage only, not path, scheme, expiry, or
+other Cookie policy.
+
 ## Native update audit
 
 `cmd/audit` is an I/O adapter over the portable snapshot APIs. It reads two
