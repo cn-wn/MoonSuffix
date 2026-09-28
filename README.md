@@ -162,6 +162,9 @@ inventory passes; maintain an inventory representative of your deployment.
   behavior by considering both ICANN and PRIVATE rules and falling back to `*`.
 - `lookup_with_options` supports ICANN-only or all-section matching and either
   an implicit wildcard or an error for unknown suffixes.
+- `trace_lookup_with_options` exposes every matching rule candidate, its source
+  section, policy eligibility, and whether it won. A valid but unlisted host
+  retains the strict-policy error alongside the trace.
 - `to_psl_text` exports a deterministic, parseable representation for pinned
   snapshots, hashing, and reproducible builds.
 - `snapshot` binds canonical PSL text to an opaque source revision, a SHA-256

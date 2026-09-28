@@ -45,6 +45,15 @@ Rules outside official section markers remain eligible in either scope so small
 synthetic and application-owned lists do not silently stop working. A result
 reports the selected rule's section; the implicit wildcard reports no section.
 
+`trace_lookup_with_options` is an opt-in diagnostic path over the same compiled
+trie. It lists the implicit wildcard and all explicit rule memberships matching
+the hostname's suffix path, including rules filtered out by ICANN-only policy.
+Candidates have a stable depth/kind/section order independent of source order;
+the selected candidate agrees with the ordinary lookup result. Unlike the
+fast lookup path, tracing constructs evidence for every candidate. Invalid
+hostname syntax fails before a trace is produced, while a valid but unlisted
+hostname preserves the strict-policy failure in the trace's outcome.
+
 ## Deterministic serialization
 
 `to_psl_text` walks the private trie, groups rules by source section, and sorts

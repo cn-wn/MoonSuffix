@@ -159,6 +159,13 @@ pub fn LookupOptions::section_scope(Self) -> SectionScope
 pub fn LookupOptions::strict_icann() -> Self
 pub fn LookupOptions::unknown_suffix_policy(Self) -> UnknownSuffixPolicy
 
+pub struct LookupTrace {
+  outcome_ : Result[Lookup, DomainError]
+  candidates_ : ReadOnlyArray[RuleCandidate]
+}
+pub fn LookupTrace::candidates(Self) -> ReadOnlyArray[RuleCandidate]
+pub fn LookupTrace::outcome(Self) -> Result[Lookup, DomainError]
+
 pub struct PolicyImpactReport {
   before_options_ : LookupOptions
   after_options_ : LookupOptions
@@ -174,6 +181,19 @@ pub fn PolicyImpactReport::is_empty(Self) -> Bool
 pub fn PolicyImpactReport::scanned_count(Self) -> Int
 pub fn PolicyImpactReport::to_csv(Self) -> String
 pub fn PolicyImpactReport::unchanged_count(Self) -> Int
+
+pub struct RuleCandidate {
+  rule_ : String
+  kind_ : RuleKind
+  section_ : RuleSection?
+  eligible_ : Bool
+  selected_ : Bool
+}
+pub fn RuleCandidate::is_eligible(Self) -> Bool
+pub fn RuleCandidate::is_selected(Self) -> Bool
+pub fn RuleCandidate::kind(Self) -> RuleKind
+pub fn RuleCandidate::rule(Self) -> String
+pub fn RuleCandidate::section(Self) -> RuleSection?
 
 pub(all) enum RuleKind {
   DefaultRule
@@ -332,6 +352,8 @@ pub fn SuffixList::site_key(Self, String) -> Result[String, SiteError]
 pub fn SuffixList::site_key_with_options(Self, String, LookupOptions) -> Result[String, SiteError]
 pub fn SuffixList::snapshot(Self, String) -> Snapshot
 pub fn SuffixList::to_psl_text(Self) -> String
+pub fn SuffixList::trace_lookup(Self, String) -> Result[LookupTrace, DomainError]
+pub fn SuffixList::trace_lookup_with_options(Self, String, LookupOptions) -> Result[LookupTrace, DomainError]
 pub fn SuffixList::verify_psl_test_file(Self, String) -> Result[ConformanceReport, ConformanceParseError]
 
 pub(all) enum UnknownSuffixPolicy {
