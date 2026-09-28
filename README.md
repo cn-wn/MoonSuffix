@@ -115,6 +115,22 @@ The command verifies the bundle and prints its revision, digest, selected
 public suffix, registrable domain, and prevailing rule. Unicode input requires
 an A-label snapshot built with `--idna`.
 
+## Check PSL conformance cases
+
+Run caller-supplied `checkPublicSuffix` cases against a local PSL file:
+
+```text
+moon run --target native cmd/conformance \
+  examples/conformance/rules.psl examples/conformance/cases.txt
+```
+
+The command prints the rule-set digest, case counts, and a CSV failure list.
+It exits unsuccessfully if a case fails, the fixture is empty or malformed, or
+the rules cannot be parsed. Use `--bundle` when the first input is a verified
+snapshot bundle. The included cases are small, synthetic examples, not a claim
+of passing the full upstream PSL suite; supply your own pinned PSL and test
+revision for a broader compatibility check.
+
 ## Audit a PSL update
 
 The native audit command compares a deployed PSL with a candidate list, then

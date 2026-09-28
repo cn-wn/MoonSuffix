@@ -1,0 +1,6 @@
+// Small synthetic smoke test; supply upstream tests separately for a full run.
+checkPublicSuffix('example.com', 'example.com');
+checkPublicSuffix('com', null);
+checkPublicSuffix('a.b.test.ck', 'b.test.ck');
+checkPublicSuffix('www.www.ck', 'www.ck');
+checkPublicSuffix('商店.公司.cn', '商店.公司.cn');

@@ -92,6 +92,12 @@ the result so a human or CI log can attribute the answer to a specific rule
 set. Its optional IDNA mode normalizes the input hostname to match an A-label
 bundle; strict ICANN mode rejects unknown suffixes.
 
+The native `cmd/conformance` command accepts local PSL text or a verified
+bundle and a caller-supplied `checkPublicSuffix` fixture. It runs the library's
+fixture verifier, emits deterministic counts and failure CSV alongside the
+canonical PSL digest, and returns a failing exit status for mismatches or
+invalid input. The command does not download upstream data.
+
 ## Why the data is injected
 
 The authoritative list changes several times per week and is separately

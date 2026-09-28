@@ -1,0 +1,1 @@
+checkPublicSuffix('example.com', 'incorrect.com');

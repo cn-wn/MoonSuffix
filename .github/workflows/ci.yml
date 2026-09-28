@@ -72,6 +72,22 @@ jobs:
       - name: Test native lookup command
         run: moon test cmd/lookup --target native --deny-warn
 
+      - name: Check native conformance command
+        run: moon check cmd/conformance --target native --deny-warn
+
+      - name: Test native conformance command
+        run: moon test cmd/conformance --target native --deny-warn
+
+      - name: Run synthetic PSL conformance cases
+        run: |
+          moon run --target native cmd/conformance \
+            examples/conformance/rules.psl examples/conformance/cases.txt
+          if moon run --target native cmd/conformance \
+            examples/conformance/rules.psl examples/conformance/failing-cases.txt; then
+            echo "mismatched conformance case unexpectedly passed"
+            exit 1
+          fi
+
       - name: Run documented example
         run: moon run cmd/main
 
