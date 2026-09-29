@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn cookie_scope_matches_host(@moonsuffix.CookieScope, String) -> Result[Bool, @moonsuffix.CookieScopeError]
+
 pub fn lookup(@moonsuffix.SuffixList, String) -> Result[@moonsuffix.Lookup, IdnaLookupError]
 
 pub fn lookup_batch(@moonsuffix.SuffixList, Array[String]) -> IdnaBatchReport
@@ -17,6 +19,14 @@ pub fn lookup_with_options(@moonsuffix.SuffixList, String, @moonsuffix.LookupOpt
 pub fn normalize_hostname(String) -> Result[String, IdnaLookupError]
 
 pub fn parse_psl(String) -> Result[@moonsuffix.SuffixList, IdnaPslError]
+
+pub fn resolve_cookie_scope(@moonsuffix.SuffixList, String, String?) -> Result[@moonsuffix.CookieScope, @moonsuffix.CookieScopeError]
+
+pub fn resolve_cookie_scope_with_options(@moonsuffix.SuffixList, String, String?, @moonsuffix.LookupOptions) -> Result[@moonsuffix.CookieScope, @moonsuffix.CookieScopeError]
+
+pub fn shareable_cookie_scopes(@moonsuffix.SuffixList, String) -> Result[ReadOnlyArray[@moonsuffix.CookieScope], @moonsuffix.CookieScopeError]
+
+pub fn shareable_cookie_scopes_with_options(@moonsuffix.SuffixList, String, @moonsuffix.LookupOptions) -> Result[ReadOnlyArray[@moonsuffix.CookieScope], @moonsuffix.CookieScopeError]
 
 // Errors
 

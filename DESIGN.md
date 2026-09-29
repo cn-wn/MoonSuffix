@@ -118,6 +118,12 @@ lookups return A-labels, which are safe to compare and store as stable keys.
 Its batch lookup retains each original Unicode input, index, and either an
 A-label lookup or an IDNA/PSL error. A malformed row does not prevent later
 rows from being classified; the report uses the core batch CSV schema.
+Its Cookie adapter normalizes the request host and optional `Domain` value
+under the same UTS #46 profile, preserving one compatibility leading dot on
+the attribute and rejecting a trailing root dot. It then delegates public-
+suffix checks, domain matching, and scope enumeration to the core. Conversion
+and core validation errors retain the original Unicode field where possible;
+stored scopes use A-labels.
 
 ## Snapshot comparison
 

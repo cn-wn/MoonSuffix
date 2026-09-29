@@ -81,6 +81,22 @@ let report = @suffix_idna.lookup_batch(
 println(report.to_csv())
 ```
 
+The same adapter also accepts Unicode Cookie request hosts and `Domain`
+attributes. It converts both names to A-labels before applying the core's
+public-suffix and domain-match rules:
+
+```moonbit
+let scope = @suffix_idna.resolve_cookie_scope(
+  list, "api.商店.公司.cn", Some(".商店.公司.cn"),
+).unwrap()
+println(scope.domain()) // xn--czrs0t.xn--55qx5d.cn
+println(@suffix_idna.cookie_scope_matches_host(scope, "别的.商店.公司.cn")) // Ok(true)
+```
+
+`shareable_cookie_scopes` is available from the IDNA adapter too. These APIs
+cover Cookie domain scope and matching, not path, Secure, expiry, or a complete
+Cookie jar.
+
 For HTTP site comparisons, pass already extracted scheme and ASCII hostname:
 
 ```moonbit
@@ -377,7 +393,8 @@ sample”; it is not proof that a PSL rule is unnecessary.
   preserving row-level errors and optionally failing a CI input-quality gate.
 - `idna` converts Unicode PSL rules and hostnames with UTS #46 before querying
   the core; returned domain strings are A-labels. Its batch API preserves
-  Unicode inputs and IDNA errors as ordered rows with deterministic CSV.
+  Unicode inputs and IDNA errors as ordered rows with deterministic CSV. It
+  also resolves Unicode Cookie scopes and matches later Unicode request hosts.
 - `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains
   ordered mismatch diagnostics, and exports failures as deterministic CSV.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused
