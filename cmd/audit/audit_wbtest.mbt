@@ -383,3 +383,45 @@ test "IDNA audit attributes malformed Unicode inputs to inventory lines" {
     message.has_prefix("candidate PSL:"),
   )
 }
+
+///|
+test "audit gate refuses an empty inventory but accepts Cookie-only coverage" {
+  let empty = build_audit_report(
+    "com",
+    "com",
+    "# no hosts\n",
+    None,
+    "old",
+    "new",
+    false,
+  ).unwrap()
+  assert_eq(empty.scanned_count, 0)
+  assert_true(
+    audit_gate_error(empty)
+    is Some("audit inventory is empty; no hostname or Cookie scope was checked"),
+  )
+  let cookies_only = build_audit_report(
+    "com",
+    "com",
+    "# no hosts\n",
+    Some("shop.example.com\n"),
+    "old",
+    "new",
+    false,
+  ).unwrap()
+  assert_eq(cookies_only.scanned_count, 1)
+  assert_eq(audit_gate_error(cookies_only), None)
+  let changed = build_audit_report(
+    "com",
+    "com\nnet",
+    "api.net\n",
+    None,
+    "old",
+    "new",
+    true,
+  ).unwrap()
+  assert_true(
+    audit_gate_error(changed) is Some(message) &&
+    message.contains("1 inventoried"),
+  )
+}

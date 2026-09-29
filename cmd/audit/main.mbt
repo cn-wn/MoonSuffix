@@ -53,7 +53,10 @@ async fn main {
     Err(error) => fail(error)
   }
   @stdio.stdout.write(result.report)
-  if config.fail_on_impact && result.changed_count > 0 {
-    fail("PSL update changes \{result.changed_count} inventoried outcome(s)")
+  if config.fail_on_impact {
+    match audit_gate_error(result) {
+      Some(message) => fail(message)
+      None => ()
+    }
   }
 }

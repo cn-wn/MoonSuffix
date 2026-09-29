@@ -16,6 +16,7 @@ struct AuditConfig {
 struct AuditResult {
   report : String
   changed_count : Int
+  scanned_count : Int
 }
 
 ///|
@@ -387,6 +388,7 @@ fn render_audit_report(
   output.write_string("hostname_impact_csv:\n")
   output.write_string(impact.to_csv())
   let mut cookie_changed_count = 0
+  let mut cookie_scanned_count = 0
   match cookie_inventory {
     None => ()
     Some(source) => {
@@ -403,6 +405,7 @@ fn render_audit_report(
         new_snapshot, inputs, options,
       )
       cookie_changed_count = cookie_impact.changed_count()
+      cookie_scanned_count = cookie_impact.scanned_count()
       output.write_string("cookies_scanned=\{cookie_impact.scanned_count()}\n")
       output.write_string("cookies_changed=\{cookie_changed_count}\n")
       output.write_string(
@@ -415,5 +418,17 @@ fn render_audit_report(
   Ok({
     report: output.to_string(),
     changed_count: impact.changed_count() + cookie_changed_count,
+    scanned_count: impact.scanned_count() + cookie_scanned_count,
   })
+}
+
+///|
+fn audit_gate_error(result : AuditResult) -> String? {
+  if result.scanned_count == 0 {
+    Some("audit inventory is empty; no hostname or Cookie scope was checked")
+  } else if result.changed_count > 0 {
+    Some("PSL update changes \{result.changed_count} inventoried outcome(s)")
+  } else {
+    None
+  }
 }

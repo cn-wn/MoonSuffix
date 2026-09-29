@@ -169,6 +169,9 @@ Add `--fail-on-impact` to use it as an upgrade gate in CI. It still prints the
 full report, then exits unsuccessfully if any hostname in the inventory has a
 changed lookup outcome. A rule-only change with no effect on the supplied
 inventory passes; maintain an inventory representative of your deployment.
+The gate also fails when both the hostname and optional Cookie inventories are
+empty, because such a run has checked no outcomes. A Cookie-only inventory is
+valid when supplied intentionally.
 
 To audit Cookie storage as well, add a Cookie inventory. Each non-comment line
 contains an ASCII request host by default; an optional tab and second field specify the

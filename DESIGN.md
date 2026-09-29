@@ -137,6 +137,8 @@ The native audit command's optional IDNA mode converts raw PSL rules and both
 inventories to A-labels before comparison. Verified bundle mode uses the
 bundles' already-canonical rules and normalizes only the inventories. Output
 uses A-labels, so reports can be compared against stored snapshot data.
+When used as a gate, an empty combined inventory is an error rather than a
+zero-impact success; Cookie-only inventories still count as coverage.
 
 ## Batch classification
 

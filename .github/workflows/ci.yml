@@ -231,6 +231,20 @@ jobs:
             --strict-icann \
             --fail-on-impact
 
+      - name: Reject empty audit gate inventories
+        run: |
+          empty_inventory="$(mktemp)"
+          diagnostic="$(mktemp)"
+          if moon run --target native cmd/audit \
+            examples/audit/old.psl examples/audit/old.psl \
+            "$empty_inventory" \
+            --from example-v1 --to example-v1 \
+            --fail-on-impact > "$diagnostic" 2>&1; then
+            echo "empty audit gate unexpectedly passed"
+            exit 1
+          fi
+          grep -q 'audit inventory is empty' "$diagnostic"
+
       - name: Verify audit gate rejects affected hosts
         run: |
           if moon run --target native cmd/audit \
