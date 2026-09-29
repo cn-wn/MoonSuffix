@@ -234,6 +234,13 @@ require equality; Domain scopes allow equality or a descendant separated by
 a dot. Malformed target hosts return an error. Path, Secure, expiry, and other
 Cookie attributes remain the caller's responsibility.
 
+`shareable_cookie_scopes` validates the request host once and uses its
+registrable-domain boundary to enumerate only non-host-only Domain scopes,
+from the full host down to eTLD+1. It does not include a public suffix, even
+when an equal `Domain` attribute would be accepted as a host-only compatibility
+case. PRIVATE and wildcard/exception rules alter the boundary in the same way
+as ordinary lookup; explicit policy options keep this choice visible.
+
 ## Cookie scope update audit
 
 `Snapshot::analyze_cookie_scope_impact` replays an ordered inventory of request

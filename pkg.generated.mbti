@@ -398,6 +398,8 @@ pub fn SuffixList::same_registrable_site(Self, String, String) -> Result[Bool, S
 pub fn SuffixList::same_registrable_site_with_options(Self, String, String, LookupOptions) -> Result[Bool, SiteError]
 pub fn SuffixList::schemeful_site(Self, String, String) -> Result[SchemefulSite, SiteError]
 pub fn SuffixList::schemeful_site_with_options(Self, String, String, LookupOptions) -> Result[SchemefulSite, SiteError]
+pub fn SuffixList::shareable_cookie_scopes(Self, String) -> Result[ReadOnlyArray[CookieScope], CookieScopeError]
+pub fn SuffixList::shareable_cookie_scopes_with_options(Self, String, LookupOptions) -> Result[ReadOnlyArray[CookieScope], CookieScopeError]
 pub fn SuffixList::site_key(Self, String) -> Result[String, SiteError]
 pub fn SuffixList::site_key_with_options(Self, String, LookupOptions) -> Result[String, SiteError]
 pub fn SuffixList::snapshot(Self, String) -> Snapshot

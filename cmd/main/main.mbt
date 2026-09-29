@@ -112,4 +112,11 @@ fn main {
   println(
     "cookie scope: domain=\{cookie_scope.domain()} host-only=\{cookie_scope.is_host_only()}",
   )
+  let shareable = suffixes
+    .shareable_cookie_scopes("api.shop.example.com")
+    .unwrap()
+  println("shareable Cookie domains: \{shareable.length()}")
+  for scope in shareable {
+    println("  Domain=\{scope.domain()}")
+  }
 }

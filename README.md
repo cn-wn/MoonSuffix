@@ -91,6 +91,24 @@ println(first.same_site(second)) // true
 println(first.same_site(third))  // false
 ```
 
+To find the `Domain` values a server may use to share a Cookie with sibling
+hosts, ask the same PSL-aware core for scopes ordered from narrowest to
+broadest:
+
+```moonbit
+let scopes = suffixes.shareable_cookie_scopes("api.shop.example.com").unwrap()
+for scope in scopes {
+  println(scope.domain())
+}
+```
+
+This prints `api.shop.example.com`, `shop.example.com`, then `example.com`.
+
+The public suffix (`com` here) is never suggested. For a host that is itself a
+public suffix, the result is empty; an explicit equal `Domain` attribute would
+create a host-only Cookie, not a shareable one. Inputs must be ASCII/A-label
+DNS names; callers with Unicode names can first use the separate IDNA adapter.
+
 ## Build a PSL snapshot
 
 Build a single-file snapshot from an explicitly chosen local PSL revision:
@@ -318,6 +336,8 @@ aborting the inventory.
 - `resolve_cookie_scope` converts an optional Cookie `Domain` attribute into its
   canonical stored domain and host-only flag, rejecting public-suffix scope
   escalation, unrelated domains, and malformed non-ASCII server values.
+- `shareable_cookie_scopes` enumerates valid `Domain` Cookie scopes from the
+  request host down to its registrable boundary under the selected PSL policy.
 - `CookieScope::matches_host` checks whether that stored domain scope covers a
   later request hostname, distinguishing host-only and Domain cookies.
 - `Snapshot::analyze_cookie_scope_impact` tests an ordered inventory of request

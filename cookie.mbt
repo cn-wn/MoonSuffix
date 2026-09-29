@@ -184,3 +184,56 @@ pub fn SuffixList::resolve_cookie_scope_with_options(
   }
   Ok({ domain_: domain, host_only_: false, })
 }
+
+///|
+/// Enumerate valid, shareable Cookie Domain scopes from narrowest to broadest.
+///
+/// The request host is included when it is not itself a public suffix. The
+/// public suffix is never included. A public-suffix request host therefore
+/// yields no shareable scope, even though an equal Domain attribute resolves
+/// to a host-only cookie for compatibility.
+pub fn SuffixList::shareable_cookie_scopes(
+  self : SuffixList,
+  request_host : String,
+) -> Result[ReadOnlyArray[CookieScope], CookieScopeError] {
+  self.shareable_cookie_scopes_with_options(
+    request_host,
+    LookupOptions::browser_default(),
+  )
+}
+
+///|
+/// Enumerate shareable Cookie Domain scopes under an explicit PSL policy.
+pub fn SuffixList::shareable_cookie_scopes_with_options(
+  self : SuffixList,
+  request_host : String,
+  options : LookupOptions,
+) -> Result[ReadOnlyArray[CookieScope], CookieScopeError] {
+  let host = match canonical_request_host(request_host) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let lookup = match self.lookup_with_options(host, options) {
+    Ok(value) => value
+    Err(error) => return Err(InvalidRequestHost(request_host, error.message()))
+  }
+  let registrable = match lookup.registrable_domain() {
+    Some(value) => value
+    None => return Ok(ReadOnlyArray::from_array([]))
+  }
+  let labels : Array[String] = []
+  for label in host.split(".") {
+    labels.push(label.to_owned())
+  }
+  let mut registrable_label_count = 0
+  for _ in registrable.split(".") {
+    registrable_label_count = registrable_label_count + 1
+  }
+  let scopes : Array[CookieScope] = []
+  for start = 0
+      start <= labels.length() - registrable_label_count
+      start = start + 1 {
+    scopes.push({ domain_: labels[start:].join("."), host_only_: false, })
+  }
+  Ok(ReadOnlyArray::from_array(scopes))
+}
