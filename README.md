@@ -70,6 +70,17 @@ Run this example with `moon run examples/idna`. Import
 `moonbit-community/idna`. The core package remains usable without importing
 that adapter.
 
+For a Unicode hostname collection, the adapter's batch API keeps invalid
+inputs as rows and continues with later names:
+
+```moonbit
+let report = @suffix_idna.lookup_batch(
+  list,
+  ["商店.公司.cn", "商店..公司.cn", "xn--czrs0t.xn--55qx5d.cn"],
+)
+println(report.to_csv())
+```
+
 For HTTP site comparisons, pass already extracted scheme and ASCII hostname:
 
 ```moonbit
@@ -251,8 +262,22 @@ The report includes the snapshot revision and digest, policy, and success/error
 counts. Add `--fail-on-error` to return an unsuccessful status after printing
 the report if any row failed or the inventory is empty. Blank and `#` comment
 lines are ignored; remaining entries retain their order and duplicates, with
-zero-based CSV indexes. Supply ASCII or pre-normalized A-label hostnames; this
-command does not perform IDNA conversion.
+zero-based CSV indexes. By default, supply ASCII or pre-normalized A-label
+hostnames. For Unicode input, use `--idna` with a snapshot built from
+IDNA-normalized PSL rules:
+
+```text
+moon run --target native cmd/snapshot \
+  examples/idna/rules.psl unicode.snapshot \
+  --revision unicode-example-v1 --idna
+moon run --target native cmd/classify \
+  unicode.snapshot examples/classify/unicode-hosts.txt \
+  --idna --strict-icann
+```
+
+The IDNA mode keeps the original input in the CSV and records its A-label form
+in `normalized_domain`. IDNA conversion failures become error rows instead of
+aborting the inventory.
 
 ## Current API
 
@@ -309,7 +334,8 @@ command does not perform IDNA conversion.
 - `cmd/classify` turns a hostname inventory into ordered batch-lookup CSV,
   preserving row-level errors and optionally failing a CI input-quality gate.
 - `idna` converts Unicode PSL rules and hostnames with UTS #46 before querying
-  the core; returned domain strings are A-labels.
+  the core; returned domain strings are A-labels. Its batch API preserves
+  Unicode inputs and IDNA errors as ordered rows with deterministic CSV.
 - `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains
   ordered mismatch diagnostics, and exports failures as deterministic CSV.
 - `public_suffix`, `registrable_domain`, and `is_public_suffix` provide focused

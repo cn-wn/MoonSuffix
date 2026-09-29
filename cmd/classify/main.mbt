@@ -5,7 +5,7 @@ async fn main {
   let bundle = @fs.read_file(config.bundle_path).text()
   let inventory = @fs.read_file(config.hosts_path).text()
   let result = match
-    run_classification(bundle, inventory, config.strict_icann) {
+    run_classification(bundle, inventory, config.strict_icann, config.idna) {
     Ok(value) => value
     Err(error) => fail(error)
   }

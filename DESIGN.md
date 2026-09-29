@@ -115,6 +115,9 @@ markers and exact, wildcard, and exception rule prefixes. Conversion errors
 identify the source rule line or input hostname. The core keeps its existing
 case-only behavior for callers with already canonicalized input. IDNA adapter
 lookups return A-labels, which are safe to compare and store as stable keys.
+Its batch lookup retains each original Unicode input, index, and either an
+A-label lookup or an IDNA/PSL error. A malformed row does not prevent later
+rows from being classified; the report uses the core batch CSV schema.
 
 ## Snapshot comparison
 
@@ -158,8 +161,10 @@ The native `cmd/classify` command connects this batch API to a verified
 snapshot bundle and a local hostname inventory. It skips blank and comment
 lines but retains all remaining entries, including malformed names, as CSV
 rows. The optional gate exits unsuccessfully after producing the report if any
-row failed or no hostname was checked. Inputs are ASCII/A-label DNS names;
-IDNA conversion remains an explicit upstream step.
+row failed or no hostname was checked. Its default mode accepts ASCII/A-label
+DNS names. `--idna` selects the adapter's recoverable batch path, preserving
+Unicode inputs and showing normalized A-labels in successful CSV rows. The
+snapshot must already hold A-label PSL rules.
 
 ## Registrable site identity
 

@@ -8,6 +8,10 @@ import {
 // Values
 pub fn lookup(@moonsuffix.SuffixList, String) -> Result[@moonsuffix.Lookup, IdnaLookupError]
 
+pub fn lookup_batch(@moonsuffix.SuffixList, Array[String]) -> IdnaBatchReport
+
+pub fn lookup_batch_with_options(@moonsuffix.SuffixList, Array[String], @moonsuffix.LookupOptions) -> IdnaBatchReport
+
 pub fn lookup_with_options(@moonsuffix.SuffixList, String, @moonsuffix.LookupOptions) -> Result[@moonsuffix.Lookup, IdnaLookupError]
 
 pub fn normalize_hostname(String) -> Result[String, IdnaLookupError]
@@ -17,6 +21,26 @@ pub fn parse_psl(String) -> Result[@moonsuffix.SuffixList, IdnaPslError]
 // Errors
 
 // Types and methods
+pub struct IdnaBatchItem {
+  index_ : Int
+  input_ : String
+  result_ : Result[@moonsuffix.Lookup, IdnaLookupError]
+}
+pub fn IdnaBatchItem::index(Self) -> Int
+pub fn IdnaBatchItem::input(Self) -> String
+pub fn IdnaBatchItem::result(Self) -> Result[@moonsuffix.Lookup, IdnaLookupError]
+
+pub struct IdnaBatchReport {
+  items_ : ReadOnlyArray[IdnaBatchItem]
+  success_count_ : Int
+  error_count_ : Int
+}
+pub fn IdnaBatchReport::error_count(Self) -> Int
+pub fn IdnaBatchReport::items(Self) -> ReadOnlyArray[IdnaBatchItem]
+pub fn IdnaBatchReport::length(Self) -> Int
+pub fn IdnaBatchReport::success_count(Self) -> Int
+pub fn IdnaBatchReport::to_csv(Self) -> String
+
 pub(all) enum IdnaLookupError {
   InvalidHostname(String, String)
   InvalidDomain(@moonsuffix.DomainError)

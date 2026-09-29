@@ -4,6 +4,7 @@ struct ClassifyConfig {
   hosts_path : String
   strict_icann : Bool
   fail_on_error : Bool
+  idna : Bool
 }
 
 ///|
@@ -26,6 +27,10 @@ fn classify_command() -> @argparse.Command {
       @argparse.FlagArg(
         "fail-on-error",
         about="Exit nonzero if a row fails or the inventory is empty",
+      ),
+      @argparse.FlagArg(
+        "idna",
+        about="Normalize Unicode inventory hostnames to A-labels per row",
       ),
     ],
     positionals=[
@@ -54,6 +59,7 @@ fn parse_classify_config(argv : ArrayView[String]) -> ClassifyConfig raise {
     hosts_path,
     strict_icann: matches.flags.get("strict-icann").unwrap_or(false),
     fail_on_error: matches.flags.get("fail-on-error").unwrap_or(false),
+    idna: matches.flags.get("idna").unwrap_or(false),
   }
 }
 
@@ -74,6 +80,7 @@ fn run_classification(
   bundle : String,
   inventory : String,
   strict_icann : Bool,
+  idna : Bool,
 ) -> Result[ClassifyResult, String] {
   let snapshot = match @moonsuffix.Snapshot::restore_bundle_text(bundle) {
     Ok(value) => value
@@ -90,7 +97,13 @@ fn run_classification(
   }
   let policy = if strict_icann { "strict-icann" } else { "browser" }
   let hosts = parse_classify_hosts(inventory)
-  let batch = list.lookup_batch_with_options(hosts, options)
+  let (scanned, succeeded, failed, csv) = if idna {
+    let batch = @suffix_idna.lookup_batch_with_options(list, hosts, options)
+    (batch.length(), batch.success_count(), batch.error_count(), batch.to_csv())
+  } else {
+    let batch = list.lookup_batch_with_options(hosts, options)
+    (batch.length(), batch.success_count(), batch.error_count(), batch.to_csv())
+  }
   let output = StringBuilder()
   output.write_string("format=moonsuffix-classify-v1\n")
   for line in snapshot.manifest_text().split("\n") {
@@ -102,15 +115,15 @@ fn run_classification(
   output.write_string("psl_sha256=\{snapshot.sha256()}\n")
   output.write_string("rule_count=\{snapshot.rule_count()}\n")
   output.write_string("policy=\{policy}\n")
-  output.write_string("hosts_scanned=\{batch.length()}\n")
-  output.write_string("hosts_succeeded=\{batch.success_count()}\n")
-  output.write_string("hosts_failed=\{batch.error_count()}\n")
+  output.write_string("hosts_scanned=\{scanned}\n")
+  output.write_string("hosts_succeeded=\{succeeded}\n")
+  output.write_string("hosts_failed=\{failed}\n")
   output.write_string("hostname_csv:\n")
-  output.write_string(batch.to_csv())
+  output.write_string(csv)
   Ok({
     report: output.to_string(),
-    scanned_count: batch.length(),
-    error_count: batch.error_count(),
+    scanned_count: scanned,
+    error_count: failed,
   })
 }
 
