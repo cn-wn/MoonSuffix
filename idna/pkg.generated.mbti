@@ -10,6 +10,8 @@ pub fn lookup(@moonsuffix.SuffixList, String) -> Result[@moonsuffix.Lookup, Idna
 
 pub fn lookup_with_options(@moonsuffix.SuffixList, String, @moonsuffix.LookupOptions) -> Result[@moonsuffix.Lookup, IdnaLookupError]
 
+pub fn normalize_hostname(String) -> Result[String, IdnaLookupError]
+
 pub fn parse_psl(String) -> Result[@moonsuffix.SuffixList, IdnaPslError]
 
 // Errors

@@ -309,3 +309,77 @@ test "identify which PSL input is malformed" {
   )
   assert_true(new_error is Err(message) && message.has_prefix("candidate PSL:"))
 }
+
+///|
+test "IDNA audit normalizes raw rules and both inventories" {
+  let args = parse_audit_config([
+    "old.psl", "new.psl", "hosts.txt", "--from", "old", "--to", "new", "--idna",
+    "--strict-icann", "--cookie-inventory", "cookies.tsv",
+  ])
+  assert_true(args.idna)
+  let old_rules = "// ===BEGIN ICANN DOMAINS===\ncn\n// ===END ICANN DOMAINS===\n"
+  let new_rules = "// ===BEGIN ICANN DOMAINS===\ncn\n公司.cn\n// ===END ICANN DOMAINS===\n"
+  let hosts = "商店.公司.cn\n"
+  let cookies = "商店.公司.cn\t.公司.cn\n"
+  let raw = build_audit_report_with_idna(
+    old_rules,
+    new_rules,
+    hosts,
+    Some(cookies),
+    "old",
+    "new",
+    true,
+    true,
+  ).unwrap()
+  assert_eq(raw.changed_count, 2)
+  assert_true(raw.report.contains("hosts_changed=1\n"))
+  assert_true(raw.report.contains("cookies_changed=1\n"))
+  assert_true(raw.report.contains("xn--55qx5d.cn"))
+  let old_bundle = @suffix_idna.parse_psl(old_rules)
+    .unwrap()
+    .snapshot("old")
+    .bundle_text()
+  let new_bundle = @suffix_idna.parse_psl(new_rules)
+    .unwrap()
+    .snapshot("new")
+    .bundle_text()
+  let bundled = build_bundle_audit_report_with_idna(
+    old_bundle,
+    new_bundle,
+    hosts,
+    Some(cookies),
+    true,
+    true,
+  ).unwrap()
+  assert_eq(bundled.report, raw.report)
+}
+
+///|
+test "IDNA audit attributes malformed Unicode inputs to inventory lines" {
+  assert_true(
+    parse_host_inventory_with_idna("商店.公司.cn\na..cn", true)
+    is Err(message) &&
+    message.has_prefix("hostname inventory line 2:"),
+  )
+  assert_true(
+    parse_cookie_inventory_with_idna(
+      "商店.公司.cn\t公司.cn\na.cn\ta..cn", true,
+    )
+    is Err(message) &&
+    message.has_prefix("cookie inventory line 2:"),
+  )
+  assert_true(
+    build_audit_report_with_idna(
+      "cn",
+      "foo.*.cn",
+      "a.cn",
+      None,
+      "old",
+      "new",
+      false,
+      true,
+    )
+    is Err(message) &&
+    message.has_prefix("candidate PSL:"),
+  )
+}

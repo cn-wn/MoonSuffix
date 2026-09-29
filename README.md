@@ -171,7 +171,7 @@ changed lookup outcome. A rule-only change with no effect on the supplied
 inventory passes; maintain an inventory representative of your deployment.
 
 To audit Cookie storage as well, add a Cookie inventory. Each non-comment line
-contains an ASCII request host; an optional tab and second field specify the
+contains an ASCII request host by default; an optional tab and second field specify the
 Cookie `Domain` attribute. A one-field line means that attribute is absent.
 For example, this invocation keeps the hostname inventory unchanged but finds
 three Cookie-scope changes and fails the upgrade gate:
@@ -187,9 +187,28 @@ moon run --target native cmd/audit \
 The report adds Cookie counts and changed-row CSV only when the option is
 present. The gate fails if either a hostname or Cookie scope changes. These
 inputs cover the DNS domain component of Cookie storage, not path, expiry, or
-Secure; prepare Unicode names as A-labels before using this inventory. Hostnames
+Secure. Without `--idna`, prepare Unicode names as A-labels before using this inventory. Hostnames
 rejected by the core lookup syntax and malformed ASCII Cookie DNS fields fail
 with their source line instead of being silently counted as unchanged.
+
+For Unicode PSL rules and DNS names in either inventory, add `--idna`. The
+command converts raw rules, request hosts, Cookie Domain attributes, and
+hostname inventory entries to A-labels before comparison. In `--bundles`
+mode, the bundles must already contain A-label rules (for example, built with
+`cmd/snapshot --idna`); the flag normalizes only inventory names. Report rows
+show the normalized A-labels.
+
+```text
+moon run --target native cmd/audit \
+  examples/audit/old-unicode.psl examples/audit/new-unicode.psl \
+  examples/audit/unicode-hosts.txt \
+  --from old --to new --idna --strict-icann \
+  --cookie-inventory examples/audit/unicode-cookies.tsv --fail-on-impact
+```
+
+This synthetic update changes both the registrable-domain boundary for the
+hostname and whether the Cookie Domain is a public suffix, so the gate exits
+unsuccessfully.
 
 ## Current API
 

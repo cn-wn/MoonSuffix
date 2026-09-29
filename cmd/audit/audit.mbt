@@ -9,6 +9,7 @@ struct AuditConfig {
   strict_icann : Bool
   fail_on_impact : Bool
   bundles : Bool
+  idna : Bool
 }
 
 ///|
@@ -34,6 +35,10 @@ fn audit_command() -> @argparse.Command {
       @argparse.FlagArg(
         "bundles",
         about="Read and verify versioned snapshot bundles instead of raw PSL files",
+      ),
+      @argparse.FlagArg(
+        "idna",
+        about="Normalize Unicode PSL rules and inventory DNS names to A-labels",
       ),
     ],
     options=[
@@ -115,18 +120,38 @@ fn parse_audit_config(argv : ArrayView[String]) -> AuditConfig raise {
     strict_icann: matches.flags.get("strict-icann").unwrap_or(false),
     fail_on_impact: matches.flags.get("fail-on-impact").unwrap_or(false),
     bundles,
+    idna: matches.flags.get("idna").unwrap_or(false),
   }
 }
 
 ///|
 fn parse_host_inventory(source : String) -> Result[Array[String], String] {
+  parse_host_inventory_with_idna(source, false)
+}
+
+///|
+fn parse_host_inventory_with_idna(
+  source : String,
+  idna : Bool,
+) -> Result[Array[String], String] {
   let hosts : Array[String] = []
   let validator = @moonsuffix.SuffixList::parse("").unwrap()
   let mut line_number = 0
   for line in source.split("\n") {
     line_number = line_number + 1
-    let host = line.trim().to_owned()
-    if host != "" && !host.has_prefix("#") {
+    let raw_host = line.trim().to_owned()
+    if raw_host != "" && !raw_host.has_prefix("#") {
+      let host = if idna {
+        match @suffix_idna.normalize_hostname(raw_host) {
+          Ok(value) => value
+          Err(error) =>
+            return Err(
+              "hostname inventory line \{line_number}: \{error.message()}",
+            )
+        }
+      } else {
+        raw_host
+      }
       match validator.lookup(host) {
         Ok(_) => ()
         Err(error) =>
@@ -146,6 +171,14 @@ fn parse_host_inventory(source : String) -> Result[Array[String], String] {
 /// malformed hostnames and Domain values fail with their source line.
 fn parse_cookie_inventory(
   source : String,
+) -> Result[Array[@moonsuffix.CookieScopeInput], String] {
+  parse_cookie_inventory_with_idna(source, false)
+}
+
+///|
+fn parse_cookie_inventory_with_idna(
+  source : String,
+  idna : Bool,
 ) -> Result[Array[@moonsuffix.CookieScopeInput], String] {
   let inputs : Array[@moonsuffix.CookieScopeInput] = []
   let mut line_number = 0
@@ -169,8 +202,35 @@ fn parse_cookie_inventory(
         "cookie inventory line \{line_number}: expected a host and at most one Domain field",
       )
     }
-    let attribute = if fields.length() == 2 { Some(fields[1]) } else { None }
-    let input = @moonsuffix.CookieScopeInput::new(fields[0], attribute)
+    let host = if idna {
+      match @suffix_idna.normalize_hostname(fields[0]) {
+        Ok(value) => value
+        Err(error) =>
+          return Err("cookie inventory line \{line_number}: \{error.message()}")
+      }
+    } else {
+      fields[0]
+    }
+    let attribute = if fields.length() == 2 {
+      if idna {
+        let raw = fields[1]
+        let dotted = raw.has_prefix(".")
+        let body = if dotted { raw[1:].to_owned() } else { raw }
+        let ascii = match @suffix_idna.normalize_hostname(body) {
+          Ok(value) => value
+          Err(error) =>
+            return Err(
+              "cookie inventory line \{line_number}: \{error.message()}",
+            )
+        }
+        Some(if dotted { "." + ascii } else { ascii })
+      } else {
+        Some(fields[1])
+      }
+    } else {
+      None
+    }
+    let input = @moonsuffix.CookieScopeInput::new(host, attribute)
     match input.validate_syntax() {
       Ok(_) => ()
       Err(error) =>
@@ -185,10 +245,18 @@ fn parse_cookie_inventory(
 fn parse_psl_for_audit(
   label : String,
   source : String,
+  idna : Bool,
 ) -> Result[@moonsuffix.SuffixList, String] {
-  match @moonsuffix.SuffixList::parse(source) {
-    Ok(suffixes) => Ok(suffixes)
-    Err(error) => Err("\{label} PSL: \{error.message()}")
+  if idna {
+    match @suffix_idna.parse_psl(source) {
+      Ok(suffixes) => Ok(suffixes)
+      Err(error) => Err("\{label} PSL: \{error.message()}")
+    }
+  } else {
+    match @moonsuffix.SuffixList::parse(source) {
+      Ok(suffixes) => Ok(suffixes)
+      Err(error) => Err("\{label} PSL: \{error.message()}")
+    }
   }
 }
 
@@ -202,18 +270,35 @@ fn build_audit_report(
   to_revision : String,
   strict_icann : Bool,
 ) -> Result[AuditResult, String] {
-  let old_suffixes = match parse_psl_for_audit("old", old_psl) {
+  build_audit_report_with_idna(
+    old_psl, new_psl, host_inventory, cookie_inventory, from_revision, to_revision,
+    strict_icann, false,
+  )
+}
+
+///|
+fn build_audit_report_with_idna(
+  old_psl : String,
+  new_psl : String,
+  host_inventory : String,
+  cookie_inventory : String?,
+  from_revision : String,
+  to_revision : String,
+  strict_icann : Bool,
+  idna : Bool,
+) -> Result[AuditResult, String] {
+  let old_suffixes = match parse_psl_for_audit("old", old_psl, idna) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let new_suffixes = match parse_psl_for_audit("candidate", new_psl) {
+  let new_suffixes = match parse_psl_for_audit("candidate", new_psl, idna) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
   let old_snapshot = old_suffixes.snapshot(from_revision)
   let new_snapshot = new_suffixes.snapshot(to_revision)
   render_audit_report(
-    old_snapshot, new_snapshot, host_inventory, cookie_inventory, strict_icann,
+    old_snapshot, new_snapshot, host_inventory, cookie_inventory, strict_icann, idna,
   )
 }
 
@@ -236,6 +321,20 @@ fn build_bundle_audit_report(
   cookie_inventory : String?,
   strict_icann : Bool,
 ) -> Result[AuditResult, String] {
+  build_bundle_audit_report_with_idna(
+    old_bundle, new_bundle, host_inventory, cookie_inventory, strict_icann, false,
+  )
+}
+
+///|
+fn build_bundle_audit_report_with_idna(
+  old_bundle : String,
+  new_bundle : String,
+  host_inventory : String,
+  cookie_inventory : String?,
+  strict_icann : Bool,
+  idna : Bool,
+) -> Result[AuditResult, String] {
   let old_snapshot = match parse_bundle_for_audit("old", old_bundle) {
     Ok(value) => value
     Err(error) => return Err(error)
@@ -245,7 +344,7 @@ fn build_bundle_audit_report(
     Err(error) => return Err(error)
   }
   render_audit_report(
-    old_snapshot, new_snapshot, host_inventory, cookie_inventory, strict_icann,
+    old_snapshot, new_snapshot, host_inventory, cookie_inventory, strict_icann, idna,
   )
 }
 
@@ -256,8 +355,14 @@ fn render_audit_report(
   host_inventory : String,
   cookie_inventory : String?,
   strict_icann : Bool,
+  idna : Bool,
 ) -> Result[AuditResult, String] {
-  let hosts = match parse_host_inventory(host_inventory) {
+  let hosts_result = if idna {
+    parse_host_inventory_with_idna(host_inventory, true)
+  } else {
+    parse_host_inventory(host_inventory)
+  }
+  let hosts = match hosts_result {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -285,7 +390,12 @@ fn render_audit_report(
   match cookie_inventory {
     None => ()
     Some(source) => {
-      let inputs = match parse_cookie_inventory(source) {
+      let inputs_result = if idna {
+        parse_cookie_inventory_with_idna(source, true)
+      } else {
+        parse_cookie_inventory(source)
+      }
+      let inputs = match inputs_result {
         Ok(value) => value
         Err(error) => return Err(error)
       }

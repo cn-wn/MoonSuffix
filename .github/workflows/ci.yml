@@ -203,6 +203,23 @@ jobs:
           fi
           grep -q 'cookie inventory line 2:' "$diagnostic"
 
+      - name: Audit Unicode rules and inventories
+        run: |
+          report="$(mktemp)"
+          if moon run --target native cmd/audit \
+            examples/audit/old-unicode.psl \
+            examples/audit/new-unicode.psl \
+            examples/audit/unicode-hosts.txt \
+            --from old --to new --idna --strict-icann \
+            --cookie-inventory examples/audit/unicode-cookies.tsv \
+            --fail-on-impact > "$report"; then
+            echo "Unicode audit gate unexpectedly passed"
+            exit 1
+          fi
+          grep -q '^hosts_changed=1$' "$report"
+          grep -q '^cookies_changed=1$' "$report"
+          grep -q 'xn--55qx5d.cn' "$report"
+
       - name: Verify audit gate on unchanged snapshots
         run: |
           moon run --target native cmd/audit \

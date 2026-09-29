@@ -107,11 +107,20 @@ pub fn lookup_with_options(
   hostname : String,
   options : @moonsuffix.LookupOptions,
 ) -> Result[@moonsuffix.Lookup, IdnaLookupError] {
-  let ascii = @unicode_idna.to_ascii(hostname) catch {
-    error => return Err(InvalidHostname(hostname, error.to_string()))
+  let ascii = match normalize_hostname(hostname) {
+    Ok(value) => value
+    Err(error) => return Err(error)
   }
   match list.lookup_with_options(ascii, options) {
     Ok(result) => Ok(result)
     Err(error) => Err(InvalidDomain(error))
+  }
+}
+
+///|
+/// Convert a DNS hostname to the A-label form used by the IDNA adapter.
+pub fn normalize_hostname(hostname : String) -> Result[String, IdnaLookupError] {
+  Ok(@unicode_idna.to_ascii(hostname)) catch {
+    error => Err(InvalidHostname(hostname, error.to_string()))
   }
 }

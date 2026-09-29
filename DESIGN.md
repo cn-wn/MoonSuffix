@@ -133,6 +133,11 @@ registrable-boundary changes, and prevailing-rule metadata changes. Unchanged
 rows are counted but omitted; changed rows preserve the original order, index,
 and duplicates. Its fully quoted CSV includes both outcomes for auditability.
 
+The native audit command's optional IDNA mode converts raw PSL rules and both
+inventories to A-labels before comparison. Verified bundle mode uses the
+bundles' already-canonical rules and normalizes only the inventories. Output
+uses A-labels, so reports can be compared against stored snapshot data.
+
 ## Batch classification
 
 Batch lookup preserves source order and duplicates. Each `BatchItem` contains

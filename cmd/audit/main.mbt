@@ -9,13 +9,33 @@ async fn main {
     Some(path) => Some(@fs.read_file(path).text())
     None => None
   }
-  let outcome = if config.bundles {
+  let outcome = if config.bundles && config.idna {
+    build_bundle_audit_report_with_idna(
+      old_psl,
+      new_psl,
+      hosts,
+      cookie_inventory,
+      config.strict_icann,
+      config.idna,
+    )
+  } else if config.bundles {
     build_bundle_audit_report(
       old_psl,
       new_psl,
       hosts,
       cookie_inventory,
       config.strict_icann,
+    )
+  } else if config.idna {
+    build_audit_report_with_idna(
+      old_psl,
+      new_psl,
+      hosts,
+      cookie_inventory,
+      config.from_revision.unwrap_or(""),
+      config.to_revision.unwrap_or(""),
+      config.strict_icann,
+      config.idna,
     )
   } else {
     build_audit_report(
