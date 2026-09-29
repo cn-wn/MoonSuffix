@@ -143,6 +143,14 @@ uses A-labels, so reports can be compared against stored snapshot data.
 When used as a gate, an empty combined inventory is an error rather than a
 zero-impact success; Cookie-only inventories still count as coverage.
 
+`analyze_rule_coverage` enumerates canonical rule-section memberships and
+indexes them once, then counts the prevailing membership selected by each
+hostname under one explicit lookup policy. Implicit wildcard, unlisted-suffix,
+and malformed-host outcomes have separate counts. The report keeps all rules,
+including zero-hit rules, in canonical section and lexicographic order and
+exports deterministic CSV. This is observational coverage of the supplied
+sample, not a proof of rule reachability or necessity.
+
 ## Batch classification
 
 Batch lookup preserves source order and duplicates. Each `BatchItem` contains

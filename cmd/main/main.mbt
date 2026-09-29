@@ -106,6 +106,13 @@ fn main {
   println(
     "strict-policy changes: \{policy_impact.changed_count()}/\{policy_impact.scanned_count()}",
   )
+  let coverage = suffixes.analyze_rule_coverage(
+    ["api.example.com", "www.www.ck", "service.internal"],
+    @moonsuffix.LookupOptions::browser_default(),
+  )
+  println(
+    "observed PSL rules: \{coverage.observed_rule_count()}/\{coverage.entries().length()}",
+  )
   let cookie_scope = suffixes
     .resolve_cookie_scope("api.shop.example.com", Some(".example.com"))
     .unwrap()

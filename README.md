@@ -297,6 +297,26 @@ The IDNA mode keeps the original input in the CSV and records its A-label form
 in `normalized_domain`. IDNA conversion failures become error rows instead of
 aborting the inventory.
 
+## Check rule coverage in a hostname sample
+
+The portable core can count how often each explicit PSL rule is actually
+selected by an application-supplied hostname sample:
+
+```moonbit
+let coverage = suffixes.analyze_rule_coverage(
+  ["api.example.com", "www.www.ck", "service.internal"],
+  @moonsuffix.LookupOptions::browser_default(),
+)
+println(coverage.observed_rule_count())
+println(coverage.to_csv())
+```
+
+The report includes every rule and section membership, even those selected
+zero times, and separates implicit-wildcard lookups from invalid or unlisted
+hosts. It is useful for checking whether a test or production sample exercises
+the rules you care about. A zero count means only “not observed in this
+sample”; it is not proof that a PSL rule is unnecessary.
+
 ## Current API
 
 - `SuffixList::parse` compiles PSL text into a reverse-label trie.
@@ -327,6 +347,8 @@ aborting the inventory.
   snapshots, classifies only changed outcomes, and exports deterministic CSV.
 - `analyze_policy_impact` compares two lookup policies over one hostname
   inventory, exposing domains affected by a stricter deployment policy.
+- `analyze_rule_coverage` counts selected explicit rules by section and
+  distinguishes implicit, unlisted, and invalid inputs in a deterministic CSV.
 - `lookup_batch` and `lookup_batch_with_options` preserve input order and retain
   invalid hostnames as row-level errors; `BatchReport::to_csv` exports every row.
 - `site_key` and `same_registrable_site` expose canonical registrable-hostname

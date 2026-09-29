@@ -244,6 +244,36 @@ pub fn RuleCandidate::kind(Self) -> RuleKind
 pub fn RuleCandidate::rule(Self) -> String
 pub fn RuleCandidate::section(Self) -> RuleSection?
 
+pub struct RuleCoverageEntry {
+  rule_ : String
+  section_ : RuleSection
+  kind_ : RuleKind
+  selected_count_ : Int
+}
+pub fn RuleCoverageEntry::kind(Self) -> RuleKind
+pub fn RuleCoverageEntry::rule(Self) -> String
+pub fn RuleCoverageEntry::section(Self) -> RuleSection
+pub fn RuleCoverageEntry::selected_count(Self) -> Int
+
+pub struct RuleCoverageReport {
+  entries_ : ReadOnlyArray[RuleCoverageEntry]
+  scanned_count_ : Int
+  explicit_count_ : Int
+  implicit_count_ : Int
+  unlisted_count_ : Int
+  invalid_count_ : Int
+  observed_rule_count_ : Int
+}
+pub fn RuleCoverageReport::entries(Self) -> ReadOnlyArray[RuleCoverageEntry]
+pub fn RuleCoverageReport::explicit_count(Self) -> Int
+pub fn RuleCoverageReport::implicit_count(Self) -> Int
+pub fn RuleCoverageReport::invalid_count(Self) -> Int
+pub fn RuleCoverageReport::observed_rule_count(Self) -> Int
+pub fn RuleCoverageReport::scanned_count(Self) -> Int
+pub fn RuleCoverageReport::to_csv(Self) -> String
+pub fn RuleCoverageReport::unlisted_count(Self) -> Int
+pub fn RuleCoverageReport::unobserved_rule_count(Self) -> Int
+
 pub(all) enum RuleKind {
   DefaultRule
   ExactRule
@@ -382,6 +412,7 @@ pub struct SuffixList {
   rule_count_ : Int
 }
 pub fn SuffixList::analyze_policy_impact(Self, Array[String], LookupOptions, LookupOptions) -> PolicyImpactReport
+pub fn SuffixList::analyze_rule_coverage(Self, Array[String], LookupOptions) -> RuleCoverageReport
 pub fn SuffixList::is_public_suffix(Self, String) -> Result[Bool, DomainError]
 pub fn SuffixList::lookup(Self, String) -> Result[Lookup, DomainError]
 pub fn SuffixList::lookup_batch(Self, Array[String]) -> BatchReport
