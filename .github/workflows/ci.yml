@@ -84,6 +84,12 @@ jobs:
       - name: Test native policy audit command
         run: moon test cmd/policy-audit --target native --deny-warn
 
+      - name: Check native classification command
+        run: moon check cmd/classify --target native --deny-warn
+
+      - name: Test native classification command
+        run: moon test cmd/classify --target native --deny-warn
+
       - name: Run synthetic PSL conformance cases
         run: |
           moon run --target native cmd/conformance \
@@ -167,6 +173,26 @@ jobs:
           fi
           grep -q '^hosts_changed=2$' "$report"
           grep -q '^after_policy=strict-icann$' "$report"
+
+      - name: Classify an inventory and retain bad rows
+        run: |
+          snapshot_dir="$(mktemp -d)"
+          report="$(mktemp)"
+          moon run --target native cmd/snapshot \
+            examples/audit/old.psl \
+            "$snapshot_dir/old.snapshot" \
+            --revision example-v1
+          if moon run --target native cmd/classify \
+            "$snapshot_dir/old.snapshot" \
+            examples/classify/hosts.txt \
+            --strict-icann --fail-on-error > "$report"; then
+            echo "classification gate unexpectedly passed"
+            exit 1
+          fi
+          grep -q '^hosts_scanned=4$' "$report"
+          grep -q '^hosts_succeeded=2$' "$report"
+          grep -q '^hosts_failed=2$' "$report"
+          grep -q '"3","a..com","error"' "$report"
 
       - name: Run documented audit workflow
         run: |

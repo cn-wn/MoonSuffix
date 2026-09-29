@@ -1,0 +1,5 @@
+# Synthetic input: keep errors as rows and continue.
+api.example.com
+user.github.io
+api.net
+a..com

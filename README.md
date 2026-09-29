@@ -234,6 +234,26 @@ source line. Add `--idna` for Unicode inventory names, provided the snapshot
 was built with A-label rules (for example, `cmd/snapshot --idna`). No PSL data
 is fetched by either command.
 
+## Classify a hostname inventory
+
+`cmd/classify` applies one verified snapshot to a line-oriented hostname file
+and prints a CSV row for every non-comment entry. A bad hostname stays in the
+output as an error row; later entries are still processed.
+
+```text
+moon run --target native cmd/snapshot \
+  examples/audit/old.psl classify.snapshot --revision example-v1
+moon run --target native cmd/classify \
+  classify.snapshot examples/classify/hosts.txt --strict-icann
+```
+
+The report includes the snapshot revision and digest, policy, and success/error
+counts. Add `--fail-on-error` to return an unsuccessful status after printing
+the report if any row failed or the inventory is empty. Blank and `#` comment
+lines are ignored; remaining entries retain their order and duplicates, with
+zero-based CSV indexes. Supply ASCII or pre-normalized A-label hostnames; this
+command does not perform IDNA conversion.
+
 ## Current API
 
 - `SuffixList::parse` compiles PSL text into a reverse-label trie.
@@ -286,6 +306,8 @@ is fetched by either command.
   `--fail-on-impact` can block a candidate update in CI.
 - `cmd/policy-audit` compares browser-default and strict ICANN lookup against
   one verified snapshot and can gate a policy migration in CI.
+- `cmd/classify` turns a hostname inventory into ordered batch-lookup CSV,
+  preserving row-level errors and optionally failing a CI input-quality gate.
 - `idna` converts Unicode PSL rules and hostnames with UTS #46 before querying
   the core; returned domain strings are A-labels.
 - `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains
@@ -333,6 +355,8 @@ moon check cmd/conformance --target native --deny-warn
 moon test cmd/conformance --target native --deny-warn
 moon check cmd/policy-audit --target native --deny-warn
 moon test cmd/policy-audit --target native --deny-warn
+moon check cmd/classify --target native --deny-warn
+moon test cmd/classify --target native --deny-warn
 ```
 
 See [DESIGN.md](DESIGN.md), [ECOSYSTEM.md](ECOSYSTEM.md), and

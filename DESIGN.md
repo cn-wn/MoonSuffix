@@ -154,6 +154,13 @@ so original inputs and diagnostic text containing commas, quotes, CR, or LF stay
 inside one CSV field. Rows are never sorted: deterministic output follows the
 caller's input order.
 
+The native `cmd/classify` command connects this batch API to a verified
+snapshot bundle and a local hostname inventory. It skips blank and comment
+lines but retains all remaining entries, including malformed names, as CSV
+rows. The optional gate exits unsuccessfully after producing the report if any
+row failed or no hostname was checked. Inputs are ASCII/A-label DNS names;
+IDNA conversion remains an explicit upstream step.
+
 ## Registrable site identity
 
 `site_key` turns a successful lookup into a comparison key by requiring a
