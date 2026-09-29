@@ -32,8 +32,9 @@ independent value is reproducible PSL data management and impact auditing.
 - [`moonbit-community/idna`](https://mooncakes.io/docs/moonbit-community/idna),
   [`tonyfettes/idna`](https://mooncakes.io/docs/tonyfettes/idna), and
   [`ZSeanYves/MoonIDNA`](https://mooncakes.io/docs/ZSeanYves/MoonIDNA) provide
-  UTS #46 / IDNA facilities. MoonSuffix expects callers to normalize list rules
-  and hostnames into the same representation until an adapter is implemented.
+  UTS #46 / IDNA facilities. MoonSuffix's separate IDNA adapter uses
+  `moonbit-community/idna` to normalize rules and hostnames to A-labels; its
+  portable core does not reimplement Unicode normalization.
 
 Mooncakes searches for `moonsuffix`, `tld`, and `effective-tld` found no second
 standalone package with the same full-PSL lifecycle boundary. This is a dated

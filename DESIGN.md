@@ -193,6 +193,11 @@ changes—for example, moving from browser defaults to listed ICANN suffixes
 only. It reuses the same acceptance, boundary, and rule-metadata categories as
 snapshot impact analysis, retains duplicates and original indexes, counts
 unchanged inputs, and exports only policy-sensitive rows as deterministic CSV.
+The native `cmd/policy-audit` makes this comparison usable with a pinned,
+verified snapshot. It validates each inventory hostname before analysis,
+optionally converts Unicode names to A-labels, reports the snapshot identity,
+and can fail a deployment gate on impact or an empty inventory. Only the
+lookup policy changes; PSL data remains identical on both sides.
 
 ## Cookie domain scope
 

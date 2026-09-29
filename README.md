@@ -213,6 +213,27 @@ This synthetic update changes both the registrable-domain boundary for the
 hostname and whether the Cookie Domain is a public suffix, so the gate exits
 unsuccessfully.
 
+## Audit a lookup-policy migration
+
+The native `cmd/policy-audit` command checks a different kind of change: it
+holds one verified PSL snapshot fixed and compares browser-default lookup with
+strict ICANN lookup over your hostname inventory. This exposes, for example,
+hosts affected by ignoring PRIVATE rules or rejecting unlisted suffixes.
+
+```text
+moon run --target native cmd/snapshot \
+  examples/audit/old.psl old.snapshot --revision example-v1
+moon run --target native cmd/policy-audit \
+  old.snapshot examples/audit/hosts.txt --fail-on-impact
+```
+
+The second command prints a deterministic summary and changed-row CSV, then
+exits unsuccessfully when an outcome changes or the inventory is empty. It
+preserves input order and duplicates; malformed hostnames fail with their
+source line. Add `--idna` for Unicode inventory names, provided the snapshot
+was built with A-label rules (for example, `cmd/snapshot --idna`). No PSL data
+is fetched by either command.
+
 ## Current API
 
 - `SuffixList::parse` compiles PSL text into a reverse-label trie.
@@ -263,6 +284,8 @@ unsuccessfully.
   into a native, local-file workflow with deterministic text and CSV output.
   It can verify stored bundles and audit an optional Cookie inventory;
   `--fail-on-impact` can block a candidate update in CI.
+- `cmd/policy-audit` compares browser-default and strict ICANN lookup against
+  one verified snapshot and can gate a policy migration in CI.
 - `idna` converts Unicode PSL rules and hostnames with UTS #46 before querying
   the core; returned domain strings are A-labels.
 - `verify_psl_test_file` runs upstream-style `checkPublicSuffix` cases, retains
@@ -306,6 +329,10 @@ moon check cmd/snapshot --target native --deny-warn
 moon test cmd/snapshot --target native --deny-warn
 moon check cmd/lookup --target native --deny-warn
 moon test cmd/lookup --target native --deny-warn
+moon check cmd/conformance --target native --deny-warn
+moon test cmd/conformance --target native --deny-warn
+moon check cmd/policy-audit --target native --deny-warn
+moon test cmd/policy-audit --target native --deny-warn
 ```
 
 See [DESIGN.md](DESIGN.md), [ECOSYSTEM.md](ECOSYSTEM.md), and

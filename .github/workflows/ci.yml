@@ -78,6 +78,12 @@ jobs:
       - name: Test native conformance command
         run: moon test cmd/conformance --target native --deny-warn
 
+      - name: Check native policy audit command
+        run: moon check cmd/policy-audit --target native --deny-warn
+
+      - name: Test native policy audit command
+        run: moon test cmd/policy-audit --target native --deny-warn
+
       - name: Run synthetic PSL conformance cases
         run: |
           moon run --target native cmd/conformance \
@@ -144,6 +150,23 @@ jobs:
             examples/audit/hosts.txt \
             --bundles \
             --strict-icann
+
+      - name: Gate a lookup-policy migration
+        run: |
+          snapshot_dir="$(mktemp -d)"
+          report="$(mktemp)"
+          moon run --target native cmd/snapshot \
+            examples/audit/old.psl \
+            "$snapshot_dir/old.snapshot" \
+            --revision example-v1
+          if moon run --target native cmd/policy-audit \
+            "$snapshot_dir/old.snapshot" \
+            examples/audit/hosts.txt --fail-on-impact > "$report"; then
+            echo "policy migration unexpectedly passed"
+            exit 1
+          fi
+          grep -q '^hosts_changed=2$' "$report"
+          grep -q '^after_policy=strict-icann$' "$report"
 
       - name: Run documented audit workflow
         run: |
