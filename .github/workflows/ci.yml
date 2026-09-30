@@ -90,6 +90,12 @@ jobs:
       - name: Test native classification command
         run: moon test cmd/classify --target native --deny-warn
 
+      - name: Check native benchmark command
+        run: moon check cmd/bench --target native --deny-warn
+
+      - name: Test native benchmark command
+        run: moon test cmd/bench --target native --deny-warn
+
       - name: Run synthetic PSL conformance cases
         run: |
           moon run --target native cmd/conformance \
@@ -119,6 +125,9 @@ jobs:
           moon run --target native cmd/conformance \
             "$upstream_dir/public_suffix_list.dat" \
             "$upstream_dir/test_psl.txt" --idna
+          moon run --target native cmd/bench \
+            "$upstream_dir/public_suffix_list.dat" \
+            examples/bench/hosts.txt --idna
 
       - name: Run documented example
         run: moon run cmd/main

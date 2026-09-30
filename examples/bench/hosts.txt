@@ -1,0 +1,8 @@
+# A compact, public hostname inventory for reproducible benchmark smoke runs.
+www.example.com
+shop.example.co.uk
+www.github.io
+a.b.ck
+www.www.ck
+食狮.公司.cn
+www.食狮.中国

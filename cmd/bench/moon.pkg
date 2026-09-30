@@ -1,0 +1,14 @@
+import {
+  "cn-wn/moonsuffix",
+  "cn-wn/moonsuffix/idna" @suffix_idna,
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/bench" @clock,
+  "moonbitlang/core/env",
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/stdio",
+}
+
+supported_targets = "+native"
+
+pkgtype(kind: "executable")

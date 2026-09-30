@@ -179,6 +179,24 @@ revision of the full upstream PSL and its CC0 test file, checks both source
 hashes, and runs the complete suite with `--idna`. See [SOURCES.md](SOURCES.md)
 for the exact revision and hashes. Neither upstream file is redistributed here.
 
+## Measure a real PSL workload
+
+Use the benchmark command with a local copy of the pinned upstream PSL and a
+representative hostname inventory:
+
+```text
+moon run --target native cmd/bench \
+  public_suffix_list.dat examples/bench/hosts.txt --idna
+```
+
+It reports the canonical rule-set digest, rule and host counts, average compile
+time over five runs, and average lookup time over 1,000 inventory passes. Time
+units are microseconds. `--idna` includes UTS #46 conversion in compile time;
+inventory normalization and file I/O are excluded from the timed regions.
+The workload and timings are machine-dependent, so compare results on the same
+machine and toolchain. CI runs this command on the same pinned PSL revision as
+the conformance check, without enforcing a noisy timing threshold.
+
 ## Audit a PSL update
 
 The native audit command compares a deployed PSL with a candidate list, then
@@ -445,6 +463,8 @@ moon check cmd/policy-audit --target native --deny-warn
 moon test cmd/policy-audit --target native --deny-warn
 moon check cmd/classify --target native --deny-warn
 moon test cmd/classify --target native --deny-warn
+moon check cmd/bench --target native --deny-warn
+moon test cmd/bench --target native --deny-warn
 ```
 
 See [DESIGN.md](DESIGN.md), [ECOSYSTEM.md](ECOSYSTEM.md), and
