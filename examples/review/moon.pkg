@@ -1,0 +1,5 @@
+import {
+  "cn-wn/moonsuffix",
+}
+
+pkgtype(kind: "executable")

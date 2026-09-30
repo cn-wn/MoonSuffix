@@ -27,17 +27,24 @@ does not parse URLs, perform DNS, or replace UTS #46 canonicalization.
 From a fresh clone, run `moon update` and then:
 
 ```text
-moon run cmd/main
+moon run examples/review
 ```
 
-The output includes:
+The self-contained example prints the lookup and the before/after effect of
+adding one PRIVATE PSL rule:
 
 ```text
-api.shop.example.co.uk: suffix=co.uk registrable=example.co.uk rule=co.uk
+lookup api.shop.example.co.uk: suffix=co.uk, registrable=example.co.uk
+PSL update: +PRIVATE glideos.app
+api.glideos.app: registrable glideos.app -> api.glideos.app
+Cookie Domain=.glideos.app: glideos.app accepted -> cookie Domain attribute 'glideos.app' is a public suffix
+changed hosts=1, changed Cookie scopes=1
 ```
 
-It also shows wildcard and exception rules, a Cookie scope, and a snapshot
-diff. For Unicode domains, run `moon run examples/idna`.
+The fixture is deliberately small; the same APIs are tested in CI against
+two pinned, complete upstream PSL revisions. `moon run cmd/main` demonstrates
+wildcards, exceptions and policy choices; `moon run examples/idna` covers
+Unicode domains.
 
 The [CI workflow](https://github.com/cn-wn/MoonSuffix/actions/workflows/ci.yml?query=branch%3Amain)
 checks Wasm, Wasm-GC, and JavaScript tests. It also downloads a pinned full

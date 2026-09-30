@@ -185,6 +185,9 @@ jobs:
       - name: Run documented example
         run: moon run cmd/main
 
+      - name: Run one-minute reviewer example
+        run: moon run examples/review
+
       - name: Run Unicode hostname example
         run: moon run examples/idna
 
