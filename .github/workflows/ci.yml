@@ -49,12 +49,22 @@ jobs:
             echo "local contest material entered the package archive"
             exit 1
           fi
+          if grep -q '^tools/' package-files.txt; then
+            echo "maintainer-only release tooling entered the package archive"
+            exit 1
+          fi
           grep -q '^README\.md$' package-files.txt
           grep -q '^LICENSE$' package-files.txt
           rm package-files.txt
 
+      - name: Test release preflight response guard
+        run: moon run tools/release-preflight.mbtx --self-test
+
       - name: Check Wasm
         run: moon check --target wasm --deny-warn
+
+      - name: Build Wasm
+        run: moon build --target wasm --deny-warn
 
       - name: Test Wasm
         run: moon test --target wasm --deny-warn

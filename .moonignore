@@ -9,3 +9,4 @@ target/
 
 # Local contest materials are not part of the reusable module.
 /MoonSuffix.md
+/tools/

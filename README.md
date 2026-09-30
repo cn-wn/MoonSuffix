@@ -551,3 +551,9 @@ the upstream conformance test is dedicated to the public domain under CC0.
 Before publishing, inspect `moon package --list`; the archive intentionally
 excludes the local `MoonSuffix.md` contest document. Publishing also requires
 logging into Mooncakes as the `cn-wn` account named in `moon.mod`.
+From a repository checkout, run `moon run tools/release-preflight.mbtx` for a
+non-publishing Mooncakes validation. The script checks the login and calls
+`moon publish --dry-run`. With the tested `moon 0.1.20260920` /
+`mooncake-bin 0.1.20260911` toolchain, the server confirms the dry run with
+HTTP 202 but the CLI exits nonzero. The script accepts only that explicit
+confirmation for `cn-wn/moonsuffix` and never invokes a real publish.

@@ -1,0 +1,62 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/shell",
+  "moonbitlang/core/env",
+}
+
+///|
+/// The tested mooncake-bin 0.1.20260911 reports HTTP 202 for a successful remote
+/// publish dry-run, then exits 1. Accept only that exact server confirmation;
+/// leave all other failures visible. This script never invokes a real publish.
+fn accepted_202(report : String, exit_code : Int) -> Bool {
+  exit_code != 0 &&
+    report.contains(
+      "Server status: 202 Accepted, detail: Dry run completed successfully. No changes were made. The dry-run was made for package cn-wn/moonsuffix version ",
+    ) &&
+    report.contains("validating packaged zip:") &&
+    report.contains("running moon check on extracted package") &&
+    report.contains("Check passed") &&
+    report.contains("Error: `moon publish` failed") &&
+    !report.contains("moon check failed")
+}
+
+///|
+fn test_response_guard() -> Unit raise {
+  let expected =
+    "validating packaged zip:\nrunning moon check on extracted package\n" +
+    "Check passed\nServer status: 202 Accepted, detail: Dry run completed successfully. No changes were made. The dry-run was made for package cn-wn/moonsuffix version 0.1.0.\n" +
+    "Error: `moon publish` failed"
+  assert_true(accepted_202(expected, -1))
+  assert_false(accepted_202(expected, 0))
+  assert_false(accepted_202(expected.replace(old="cn-wn/moonsuffix", new="other/package"), -1))
+  assert_false(accepted_202(expected.replace(old="Check passed", new="moon check failed"), -1))
+  assert_false(accepted_202(expected.replace(old="202 Accepted", new="400 Bad Request"), -1))
+  println("release preflight response guard: passed")
+}
+
+///|
+async fn main {
+  let args = @env.args()
+  if args.length() > 1 && args[1] == "--self-test" {
+    test_response_guard()
+    return
+  }
+  if args.length() > 1 {
+    fail("usage: moon run tools/release-preflight.mbtx [--self-test]")
+  }
+  let identity = @shell.Cmd("moon", ["whoami"]).output()
+  if identity.exit_code() != 0 ||
+    identity.stdout().trim() != "Logged in as cn-wn" {
+    fail("Mooncakes login must be cn-wn")
+  }
+  let preview = @shell.Cmd(
+    "moon",
+    ["publish", "--dry-run"],
+  ).output(timeout_ms=180000, max_output_bytes=1000000)
+  let report = preview.stdout() + preview.stderr()
+  if preview.exit_code() == 0 || accepted_202(report, preview.exit_code()) {
+    println("Mooncakes preflight accepted for cn-wn/moonsuffix; no package was published.")
+  } else {
+    fail("Mooncakes preflight failed; inspect moon publish --dry-run output")
+  }
+}
