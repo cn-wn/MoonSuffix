@@ -22,6 +22,35 @@ tooling, and domain analytics.
 MoonSuffix is complementary to MoonBit's existing URL and IDNA libraries. It
 does not parse URLs, perform DNS, or replace UTS #46 canonicalization.
 
+## Review in one minute
+
+From a fresh clone, run `moon update` and then:
+
+```text
+moon run cmd/main
+```
+
+The output includes:
+
+```text
+api.shop.example.co.uk: suffix=co.uk registrable=example.co.uk rule=co.uk
+```
+
+It also shows wildcard and exception rules, a Cookie scope, and a snapshot
+diff. For Unicode domains, run `moon run examples/idna`.
+
+The [CI workflow](https://github.com/cn-wn/MoonSuffix/actions/workflows/ci.yml?query=branch%3Amain)
+checks Wasm, Wasm-GC, and JavaScript tests. It also downloads a pinned full
+upstream PSL and official conformance cases, checks their hashes, and exercises
+a real rule update that changes two hostname classifications and one Cookie
+scope. The source revisions and licenses are recorded in [SOURCES.md](SOURCES.md).
+
+MoonSuffix's independent contribution is caller-supplied PSL rule processing
+and reproducible update auditing. It overlaps Crater's PSL helper in
+registrable-domain lookup but does not implement Crater's browser HTTP stack;
+see the dated [ecosystem comparison](ECOSYSTEM.md). MoonSuffix does not bundle
+an up-to-date PSL, parse URLs, or implement a complete Cookie jar.
+
 ## Quick start
 
 ```moonbit

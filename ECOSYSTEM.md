@@ -1,6 +1,8 @@
 # Ecosystem position
 
-Checked on 2026-09-14 with the Mooncakes registry and public repositories.
+Initially checked on 2026-09-14 with the Mooncakes registry and public
+repositories. The comparison is scoped to `crater-browser-http` 0.19.0, not a
+claim about all later Crater versions.
 
 ## Classification
 
@@ -9,11 +11,11 @@ complementary data-lifecycle layer rather than another URL parser, IDNA library,
 or Cookie jar.
 
 `moon search publicsuffix` and `moon search "registrable domain"` identify
-[`mizchi/crater-browser-http`](https://mooncakes.io/docs/mizchi/crater-browser-http).
+[`mizchi/crater-browser-http` 0.19.0](https://mooncakes.io/docs/mizchi/crater-browser-http@0.19.0).
 Its public `psl` subpackage reduces hostnames for Crater's Cookie and SameSite
-implementation. The source documents a hand-curated rule subset with a
-last-two-label fallback; its currently bundled wildcard and exception arrays
-are empty.
+implementation. At the inspected revision, its source documents a curated rule
+subset and fallback behavior; it is not presented as a workflow for injecting
+and auditing arbitrary PSL revisions.
 
 MoonSuffix deliberately owns a different boundary: callers can inject a full
 or application-specific PSL, select ICANN versus PRIVATE semantics, inspect the
