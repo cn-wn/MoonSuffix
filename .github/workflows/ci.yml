@@ -118,7 +118,7 @@ jobs:
           mkdir -p examples/embed-smoke
           printf 'import { "cn-wn/moonsuffix", }\n\npkgtype(kind: "executable")\n' \
             > examples/embed-smoke/moon.pkg
-          printf 'fn main {\n  let snapshot = embedded_suffix_snapshot().unwrap()\n  let list = @moonsuffix.SuffixList::parse(snapshot.psl_text()).unwrap()\n  assert_eq(list.registrable_domain("www.example.com").unwrap(), Some("example.com"))\n}\n' \
+          printf 'fn main raise {\n  let snapshot = embedded_suffix_snapshot().unwrap()\n  let list = @moonsuffix.SuffixList::parse(snapshot.psl_text()).unwrap()\n  assert_eq(list.registrable_domain("www.example.com").unwrap(), Some("example.com"))\n}\n' \
             > examples/embed-smoke/main.mbt
           moon run --target native cmd/embed \
             examples/conformance/rules.psl examples/embed-smoke/embedded.mbt \
