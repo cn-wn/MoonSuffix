@@ -1,0 +1,11 @@
+# .moonignore overrides .gitignore for MoonBit package archives.
+_build/
+target/
+.mooncakes/
+.DS_Store
+*.wasm
+*.wat
+*.js.map
+
+# Local contest materials are not part of the reusable module.
+/MoonSuffix.md

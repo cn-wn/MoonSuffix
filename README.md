@@ -475,3 +475,7 @@ See [DESIGN.md](DESIGN.md), [ECOSYSTEM.md](ECOSYSTEM.md), and
 MoonSuffix source code is licensed under Apache-2.0. No copy of the PSL data is
 distributed in this repository. The upstream list has its own MPL-2.0 license;
 the upstream conformance test is dedicated to the public domain under CC0.
+
+Before publishing, inspect `moon package --list`; the archive intentionally
+excludes the local `MoonSuffix.md` contest document. Publishing also requires
+logging into Mooncakes as the `cn-wn` account named in `moon.mod`.
