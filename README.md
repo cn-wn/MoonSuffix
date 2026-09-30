@@ -172,9 +172,12 @@ moon run --target native cmd/conformance \
 The command prints the rule-set digest, case counts, and a CSV failure list.
 It exits unsuccessfully if a case fails, the fixture is empty or malformed, or
 the rules cannot be parsed. Use `--bundle` when the first input is a verified
-snapshot bundle. The included cases are small, synthetic examples, not a claim
-of passing the full upstream PSL suite; supply your own pinned PSL and test
-revision for a broader compatibility check.
+snapshot bundle. Add `--idna` for Unicode rules and test domains; it converts
+both inputs and expected results to A-labels with the same UTS #46 profile.
+The included examples are small, synthetic cases. CI also downloads a pinned
+revision of the full upstream PSL and its CC0 test file, checks both source
+hashes, and runs the complete suite with `--idna`. See [SOURCES.md](SOURCES.md)
+for the exact revision and hashes. Neither upstream file is redistributed here.
 
 ## Audit a PSL update
 

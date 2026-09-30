@@ -100,6 +100,26 @@ jobs:
             exit 1
           fi
 
+      - name: Verify pinned upstream PSL conformance suite
+        run: |
+          upstream_dir="$(mktemp -d)"
+          upstream_rev="a179a48c465e818cfd8d626691cb317985da87fb"
+          upstream_base="https://raw.githubusercontent.com/publicsuffix/list/$upstream_rev"
+          curl --fail --location --retry 3 \
+            "$upstream_base/public_suffix_list.dat" \
+            --output "$upstream_dir/public_suffix_list.dat"
+          curl --fail --location --retry 3 \
+            "$upstream_base/tests/test_psl.txt" \
+            --output "$upstream_dir/test_psl.txt"
+          printf '%s  %s\n' \
+            '7333192f818588d9d0044d27d67210c782acd6d87cf71f54a00dfa20a561cfc9' \
+            "$upstream_dir/public_suffix_list.dat" \
+            '8f50ad958916d6a8f79fba2363501475571acce752757f9126fe9d2f17dd920d' \
+            "$upstream_dir/test_psl.txt" | sha256sum --check
+          moon run --target native cmd/conformance \
+            "$upstream_dir/public_suffix_list.dat" \
+            "$upstream_dir/test_psl.txt" --idna
+
       - name: Run documented example
         run: moon run cmd/main
 

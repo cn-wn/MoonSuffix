@@ -1075,3 +1075,28 @@ test "reject malformed conformance syntax and recover on the next run" {
     1,
   )
 }
+
+///|
+test "conformance normalizer applies to inputs and expected domains" {
+  let list = @moonsuffix.SuffixList::parse("xn--55qx5d.cn\n").unwrap()
+  let normalize = fn(value : String) -> Result[String, String] {
+    if value == "invalid-name" {
+      Err("invalid name")
+    } else {
+      Ok(value.replace(old="公司", new="xn--55qx5d"))
+    }
+  }
+  let cases = "checkPublicSuffix('shop.公司.cn', 'shop.公司.cn');\n" +
+    "checkPublicSuffix('invalid-name', null);\n"
+  let report = list
+    .verify_psl_test_file_with_normalizer(cases, normalize)
+    .unwrap()
+  assert_eq(report.total_count(), 2)
+  assert_eq(report.passed_count(), 2)
+  assert_true(
+    list.verify_psl_test_file_with_normalizer(
+      "checkPublicSuffix('shop.公司.cn', 'invalid-name');", normalize,
+    )
+    is Err(InvalidConformanceCase(1, _, _)),
+  )
+}

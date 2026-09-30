@@ -17,6 +17,7 @@ pub fn ConformanceParseError::message(self : ConformanceParseError) -> String {
 pub(all) enum ConformanceActual {
   NullInput
   RejectedDomain(DomainError)
+  RejectedHostname(String)
   NoRegistrableDomain
   RegistrableDomain(String)
 } derive(Eq, Debug)
@@ -154,14 +155,19 @@ fn parse_conformance_case(
 fn SuffixList::conformance_actual(
   self : SuffixList,
   input : String?,
+  normalize : (String) -> Result[String, String],
 ) -> ConformanceActual {
   match input {
     None => NullInput
     Some(domain) =>
-      match self.registrable_domain(domain) {
-        Err(error) => RejectedDomain(error)
-        Ok(None) => NoRegistrableDomain
-        Ok(Some(value)) => RegistrableDomain(value)
+      match normalize(domain) {
+        Err(reason) => RejectedHostname(reason)
+        Ok(normalized) =>
+          match self.registrable_domain(normalized) {
+            Err(error) => RejectedDomain(error)
+            Ok(None) => NoRegistrableDomain
+            Ok(Some(value)) => RegistrableDomain(value)
+          }
       }
   }
 }
@@ -171,6 +177,7 @@ fn conformance_matches(expected : String?, actual : ConformanceActual) -> Bool {
   match (expected, actual) {
     (None, NullInput)
     | (None, RejectedDomain(_))
+    | (None, RejectedHostname(_))
     | (None, NoRegistrableDomain) => true
     (Some(wanted), RegistrableDomain(found)) => wanted == found
     _ => false
@@ -187,6 +194,24 @@ pub fn SuffixList::verify_psl_test_file(
   self : SuffixList,
   test_text : String,
 ) -> Result[ConformanceReport, ConformanceParseError] {
+  self.verify_psl_test_file_with_normalizer(test_text, fn(
+    value : String,
+  ) -> Result[String, String] {
+    Ok(value)
+  })
+}
+
+///|
+/// Verify upstream-style cases after normalizing both inputs and expected
+/// registrable domains with the same profile used to compile PSL rules.
+///
+/// The caller owns the normalization policy. This is useful for IDNA-aware
+/// conformance checks without adding Unicode dependencies to the core.
+pub fn SuffixList::verify_psl_test_file_with_normalizer(
+  self : SuffixList,
+  test_text : String,
+  normalize : (String) -> Result[String, String],
+) -> Result[ConformanceReport, ConformanceParseError] {
   let failures : Array[ConformanceFailure] = []
   let mut total_count = 0
   let mut passed_count = 0
@@ -201,8 +226,23 @@ pub fn SuffixList::verify_psl_test_file(
       None => ()
       Some((input, expected)) => {
         total_count = total_count + 1
-        let actual = self.conformance_actual(input)
-        if conformance_matches(expected, actual) {
+        let normalized_expected = match expected {
+          None => None
+          Some(value) =>
+            match normalize(value) {
+              Ok(normalized) => Some(normalized)
+              Err(reason) =>
+                return Err(
+                  InvalidConformanceCase(
+                    line_number,
+                    line.to_owned(),
+                    "expected domain cannot be normalized: " + reason,
+                  ),
+                )
+            }
+        }
+        let actual = self.conformance_actual(input, normalize)
+        if conformance_matches(normalized_expected, actual) {
           passed_count = passed_count + 1
         } else {
           failures.push({
@@ -235,6 +275,7 @@ fn conformance_actual_text(actual : ConformanceActual) -> String {
   match actual {
     NullInput => "null_input"
     RejectedDomain(error) => "rejected: " + error.message()
+    RejectedHostname(reason) => "rejected hostname: " + reason
     NoRegistrableDomain => "no_registrable_domain"
     RegistrableDomain(domain) => domain
   }

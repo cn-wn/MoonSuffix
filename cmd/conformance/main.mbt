@@ -4,7 +4,7 @@ async fn main {
   let config = parse_conformance_config(argv[1:])
   let rules = @fs.read_file(config.rules_path).text()
   let cases = @fs.read_file(config.tests_path).text()
-  let result = match run_conformance(rules, cases, config.bundle) {
+  let result = match run_conformance(rules, cases, config.bundle, config.idna) {
     Ok(value) => value
     Err(error) => fail(error)
   }

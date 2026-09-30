@@ -34,3 +34,14 @@ whose header dedicates its copyright to the public domain under CC0 1.0. Tests
 also use small synthetic rule sets written for MoonSuffix to isolate invariants.
 The `verify_psl_test_file` API parses that fixture's call syntax so users can
 run independently obtained upstream cases without bundling them in this module.
+
+CI verifies the full upstream PSL and test file from publicsuffix/list commit
+`a179a48c465e818cfd8d626691cb317985da87fb`. It checks the downloaded
+files against SHA-256 values before running `cmd/conformance --idna`:
+
+- `public_suffix_list.dat`: `7333192f818588d9d0044d27d67210c782acd6d87cf71f54a00dfa20a561cfc9`
+- `tests/test_psl.txt`: `8f50ad958916d6a8f79fba2363501475571acce752757f9126fe9d2f17dd920d`
+
+The source PSL is MPL-2.0 and the upstream test fixture is CC0. CI downloads
+them at test time; this repository does not redistribute either file. The
+result is a pinned compatibility check, not a guarantee for later PSL revisions.

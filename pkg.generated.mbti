@@ -33,6 +33,7 @@ pub fn BatchReport::to_csv(Self) -> String
 pub(all) enum ConformanceActual {
   NullInput
   RejectedDomain(DomainError)
+  RejectedHostname(String)
   NoRegistrableDomain
   RegistrableDomain(String)
 } derive(Eq, @debug.Debug)
@@ -438,6 +439,7 @@ pub fn SuffixList::to_psl_text(Self) -> String
 pub fn SuffixList::trace_lookup(Self, String) -> Result[LookupTrace, DomainError]
 pub fn SuffixList::trace_lookup_with_options(Self, String, LookupOptions) -> Result[LookupTrace, DomainError]
 pub fn SuffixList::verify_psl_test_file(Self, String) -> Result[ConformanceReport, ConformanceParseError]
+pub fn SuffixList::verify_psl_test_file_with_normalizer(Self, String, (String) -> Result[String, String]) -> Result[ConformanceReport, ConformanceParseError]
 
 pub(all) enum UnknownSuffixPolicy {
   UseDefaultWildcard

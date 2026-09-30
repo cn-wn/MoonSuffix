@@ -3,6 +3,7 @@ struct ConformanceConfig {
   rules_path : String
   tests_path : String
   bundle : Bool
+  idna : Bool
 }
 
 ///|
@@ -20,6 +21,10 @@ fn conformance_command() -> @argparse.Command {
       @argparse.FlagArg(
         "bundle",
         about="Verify a versioned snapshot bundle instead of reading raw PSL text",
+      ),
+      @argparse.FlagArg(
+        "idna",
+        about="Normalize Unicode rules and test domains to A-labels using UTS #46",
       ),
     ],
     positionals=[
@@ -49,6 +54,7 @@ fn parse_conformance_config(
     rules_path,
     tests_path,
     bundle: matches.flags.get("bundle").unwrap_or(false),
+    idna: matches.flags.get("idna").unwrap_or(false),
   }
 }
 
@@ -56,6 +62,7 @@ fn parse_conformance_config(
 fn parse_conformance_snapshot(
   source : String,
   bundle : Bool,
+  idna : Bool,
 ) -> Result[@moonsuffix.Snapshot, String] {
   if bundle {
     match @moonsuffix.Snapshot::restore_bundle_text(source) {
@@ -63,9 +70,20 @@ fn parse_conformance_snapshot(
       Err(error) => Err("invalid snapshot: \{error.message()}")
     }
   } else {
-    match @moonsuffix.SuffixList::parse(source) {
+    let parsed = if idna {
+      match @suffix_idna.parse_psl(source) {
+        Ok(value) => Ok(value)
+        Err(error) => Err(error.message())
+      }
+    } else {
+      match @moonsuffix.SuffixList::parse(source) {
+        Ok(value) => Ok(value)
+        Err(error) => Err(error.message())
+      }
+    }
+    match parsed {
       Ok(list) => Ok(list.snapshot("raw-input"))
-      Err(error) => Err(error.message())
+      Err(error) => Err(error)
     }
   }
 }
@@ -75,8 +93,9 @@ fn run_conformance(
   rules : String,
   tests : String,
   bundle : Bool,
+  idna : Bool,
 ) -> Result[ConformanceResult, String] {
-  let snapshot = match parse_conformance_snapshot(rules, bundle) {
+  let snapshot = match parse_conformance_snapshot(rules, bundle, idna) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -84,7 +103,19 @@ fn run_conformance(
     Ok(value) => value
     Err(error) => return Err(error.message())
   }
-  let result = match list.verify_psl_test_file(tests) {
+  let checked = if idna {
+    list.verify_psl_test_file_with_normalizer(tests, fn(
+      value : String,
+    ) -> Result[String, String] {
+      match @suffix_idna.normalize_hostname(value) {
+        Ok(normalized) => Ok(normalized)
+        Err(error) => Err(error.message())
+      }
+    })
+  } else {
+    list.verify_psl_test_file(tests)
+  }
+  let result = match checked {
     Ok(value) => value
     Err(error) => return Err(error.message())
   }
