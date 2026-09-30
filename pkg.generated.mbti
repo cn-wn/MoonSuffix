@@ -336,6 +336,7 @@ pub fn Snapshot::manifest_text(Self) -> String
 pub fn Snapshot::psl_text(Self) -> String
 pub fn Snapshot::restore(String, String) -> Result[Self, SnapshotLoadError]
 pub fn Snapshot::restore_bundle_text(String) -> Result[Self, SnapshotLoadError]
+pub fn Snapshot::restore_compiled_bundle_text(String) -> Result[(Self, SuffixList), SnapshotLoadError]
 pub fn Snapshot::rule_count(Self) -> Int
 pub fn Snapshot::sha256(Self) -> String
 pub fn Snapshot::source_revision(Self) -> String

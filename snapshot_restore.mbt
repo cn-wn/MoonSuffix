@@ -150,6 +150,18 @@ pub fn Snapshot::restore(
   psl_text : String,
   manifest : String,
 ) -> Result[Snapshot, SnapshotLoadError] {
+  match restore_compiled(psl_text, manifest) {
+    Ok((snapshot, _)) => Ok(snapshot)
+    Err(error) => Err(error)
+  }
+}
+
+///|
+/// Verify the snapshot and retain the parsed rules for callers that need them.
+fn restore_compiled(
+  psl_text : String,
+  manifest : String,
+) -> Result[(Snapshot, SuffixList), SnapshotLoadError] {
   let lines : Array[String] = []
   for line in manifest.split("\n") {
     lines.push(line.to_owned())
@@ -198,10 +210,15 @@ pub fn Snapshot::restore(
   if actual_count != expected_count {
     return Err(RuleCountMismatch(expected_count, actual_count))
   }
-  Ok({
-    source_revision_: revision,
-    psl_text_: psl_text,
-    sha256_: actual_digest,
-    rule_count_: actual_count,
-  })
+  Ok(
+    (
+      {
+        source_revision_: revision,
+        psl_text_: psl_text,
+        sha256_: actual_digest,
+        rule_count_: actual_count,
+      },
+      suffixes,
+    ),
+  )
 }

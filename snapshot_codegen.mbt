@@ -25,7 +25,7 @@ pub fn Snapshot::to_moonbit_source(self : Snapshot) -> String {
   )
   output.write_string("// Canonical PSL SHA-256: \{self.sha256()}\n\n")
   output.write_string(
-    "pub fn embedded_suffix_snapshot() -> Result[@moonsuffix.Snapshot, @moonsuffix.SnapshotLoadError] {\n",
+    "pub fn embedded_suffix_snapshot() -> Result[(@moonsuffix.Snapshot, @moonsuffix.SuffixList), @moonsuffix.SnapshotLoadError] {\n",
   )
   output.write_string("  let text = StringBuilder()\n")
   let mut chunk = StringBuilder()
@@ -43,7 +43,7 @@ pub fn Snapshot::to_moonbit_source(self : Snapshot) -> String {
     write_source_chunk(output, chunk)
   }
   output.write_string(
-    "  @moonsuffix.Snapshot::restore_bundle_text(text.to_string())\n",
+    "  @moonsuffix.Snapshot::restore_compiled_bundle_text(text.to_string())\n",
   )
   output.write_string("}\n")
   output.to_string()

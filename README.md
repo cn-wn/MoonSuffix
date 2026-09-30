@@ -218,7 +218,7 @@ moon run --target native cmd/embed \
 
 Place `embedded_psl.mbt` in the consuming package and import `cn-wn/moonsuffix`
 as `moonsuffix`. Call `embedded_suffix_snapshot()`; it returns a verified
-snapshot, which you can parse into a `SuffixList`. The generator refuses to
+snapshot and its parsed `SuffixList` in one pass. The generator refuses to
 overwrite an existing output file. The generated source includes PSL-derived
 data, so applications distributing it must retain the upstream MPL-2.0 source
 and notices. CI compiles and runs a generated small example; the repository

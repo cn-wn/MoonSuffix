@@ -15,11 +15,23 @@ pub fn Snapshot::bundle_text(self : Snapshot) -> String {
 pub fn Snapshot::restore_bundle_text(
   bundle : String,
 ) -> Result[Snapshot, SnapshotLoadError] {
+  match Snapshot::restore_compiled_bundle_text(bundle) {
+    Ok((snapshot, _)) => Ok(snapshot)
+    Err(error) => Err(error)
+  }
+}
+
+///|
+/// Restore a verified bundle together with its already parsed rule table.
+/// This avoids parsing the PSL a second time when the caller needs lookups.
+pub fn Snapshot::restore_compiled_bundle_text(
+  bundle : String,
+) -> Result[(Snapshot, SuffixList), SnapshotLoadError] {
   let separator = match bundle.find("\n\n") {
     Some(index) => index
     None => return Err(InvalidManifest("missing bundle separator"))
   }
   let manifest = bundle[:separator + 1].to_owned()
   let psl_text = bundle[separator + 2:].to_owned()
-  Snapshot::restore(psl_text, manifest)
+  restore_compiled(psl_text, manifest)
 }

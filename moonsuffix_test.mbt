@@ -303,6 +303,26 @@ test "single-file snapshot bundles restore byte-for-byte" {
 }
 
 ///|
+test "compiled bundle restore reuses verified rules for lookups" {
+  let original = @moonsuffix.SuffixList::parse("com\n*.ck\n!www.ck\n")
+    .unwrap()
+    .snapshot("pinned-revision")
+  let bundle = original.bundle_text()
+  let (restored, list) = @moonsuffix.Snapshot::restore_compiled_bundle_text(
+    bundle,
+  ).unwrap()
+  assert_eq(restored.bundle_text(), bundle)
+  assert_eq(list.rule_count(), restored.rule_count())
+  assert_eq(list.registrable_domain("a.www.ck").unwrap(), Some("www.ck"))
+  assert_true(
+    @moonsuffix.Snapshot::restore_compiled_bundle_text(
+      bundle.replace(old="com\n", new="net\n"),
+    )
+    is Err(DigestMismatch(_, _)),
+  )
+}
+
+///|
 test "single-file snapshot bundles reject damaged content" {
   let original = @moonsuffix.SuffixList::parse("com\n").unwrap().snapshot("v1")
   let bundle = original.bundle_text()
