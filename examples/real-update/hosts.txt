@@ -1,0 +1,4 @@
+# A PRIVATE rule added between two pinned upstream PSL revisions.
+api.glideos.app
+www.glideos.app
+example.com

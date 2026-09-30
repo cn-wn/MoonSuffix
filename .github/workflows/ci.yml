@@ -117,10 +117,11 @@ jobs:
             exit 1
           fi
 
-      - name: Verify pinned upstream PSL conformance suite
+      - name: Verify upstream conformance and real PSL update impact
         run: |
           upstream_dir="$(mktemp -d)"
           upstream_rev="a179a48c465e818cfd8d626691cb317985da87fb"
+          previous_rev="8af98195397e1891a32e4ad79fa60c87813fbaf7"
           upstream_base="https://raw.githubusercontent.com/publicsuffix/list/$upstream_rev"
           curl --fail --location --retry 3 \
             "$upstream_base/public_suffix_list.dat" \
@@ -128,17 +129,39 @@ jobs:
           curl --fail --location --retry 3 \
             "$upstream_base/tests/test_psl.txt" \
             --output "$upstream_dir/test_psl.txt"
+          curl --fail --location --retry 3 \
+            "https://raw.githubusercontent.com/publicsuffix/list/$previous_rev/public_suffix_list.dat" \
+            --output "$upstream_dir/previous_psl.dat"
           printf '%s  %s\n' \
             '7333192f818588d9d0044d27d67210c782acd6d87cf71f54a00dfa20a561cfc9' \
             "$upstream_dir/public_suffix_list.dat" \
             '8f50ad958916d6a8f79fba2363501475571acce752757f9126fe9d2f17dd920d' \
-            "$upstream_dir/test_psl.txt" | sha256sum --check
+            "$upstream_dir/test_psl.txt" \
+            '30f133414a4606da17d6506bf68e8d703534998bd5a2c8eef41a7ed8bd89f868' \
+            "$upstream_dir/previous_psl.dat" | sha256sum --check
           moon run --target native cmd/conformance \
             "$upstream_dir/public_suffix_list.dat" \
             "$upstream_dir/test_psl.txt" --idna
           moon run --target native cmd/bench \
             "$upstream_dir/public_suffix_list.dat" \
             examples/bench/hosts.txt --idna
+          moon run --target native cmd/snapshot \
+            "$upstream_dir/previous_psl.dat" "$upstream_dir/previous.snapshot" \
+            --revision "$previous_rev" --idna
+          moon run --target native cmd/snapshot \
+            "$upstream_dir/public_suffix_list.dat" "$upstream_dir/current.snapshot" \
+            --revision "$upstream_rev" --idna
+          if moon run --target native cmd/audit \
+            "$upstream_dir/previous.snapshot" "$upstream_dir/current.snapshot" \
+            examples/real-update/hosts.txt --bundles \
+            --cookie-inventory examples/real-update/cookies.tsv \
+            --fail-on-impact > "$upstream_dir/impact.txt"; then
+            echo "real PSL update unexpectedly passed the impact gate"
+            exit 1
+          fi
+          grep -q '^hosts_changed=2$' "$upstream_dir/impact.txt"
+          grep -q '^cookies_changed=1$' "$upstream_dir/impact.txt"
+          grep -q 'glideos.app' "$upstream_dir/impact.txt"
 
       - name: Run documented example
         run: moon run cmd/main

@@ -197,6 +197,14 @@ The workload and timings are machine-dependent, so compare results on the same
 machine and toolchain. CI runs this command on the same pinned PSL revision as
 the conformance check, without enforcing a noisy timing threshold.
 
+CI also exercises a real upstream PSL update: adding the PRIVATE rule
+`glideos.app` changes the registrable boundary for `api.glideos.app` and makes
+`Domain=.glideos.app` invalid for a Cookie from that host. The two pinned
+revisions are downloaded and hash-checked, converted to snapshots, and audited
+against [small example inventories](examples/real-update/hosts.txt). This
+deliberately fails the impact gate while verifying the expected two hostname
+changes and one Cookie-scope change; the PSL files themselves are not bundled.
+
 ## Audit a PSL update
 
 The native audit command compares a deployed PSL with a candidate list, then

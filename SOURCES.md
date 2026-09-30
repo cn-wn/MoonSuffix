@@ -42,6 +42,13 @@ files against SHA-256 values before running `cmd/conformance --idna`:
 - `public_suffix_list.dat`: `7333192f818588d9d0044d27d67210c782acd6d87cf71f54a00dfa20a561cfc9`
 - `tests/test_psl.txt`: `8f50ad958916d6a8f79fba2363501475571acce752757f9126fe9d2f17dd920d`
 
+The same CI job compares that list with its previous rule-changing revision,
+`8af98195397e1891a32e4ad79fa60c87813fbaf7` (source SHA-256
+`30f133414a4606da17d6506bf68e8d703534998bd5a2c8eef41a7ed8bd89f868`).
+This update added the PRIVATE rule `glideos.app`. The checked-in hostname and
+Cookie inventories exercise that specific rule change without copying upstream
+PSL data into the repository.
+
 The source PSL is MPL-2.0 and the upstream test fixture is CC0. CI downloads
 them at test time; this repository does not redistribute either file. The
 result is a pinned compatibility check, not a guarantee for later PSL revisions.
