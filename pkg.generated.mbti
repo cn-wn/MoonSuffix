@@ -331,6 +331,7 @@ pub struct Snapshot {
 pub fn Snapshot::analyze_cookie_scope_impact(Self, Self, Array[CookieScopeInput], LookupOptions) -> CookieScopeImpactReport
 pub fn Snapshot::analyze_impact(Self, Self, Array[String], LookupOptions) -> SnapshotImpact
 pub fn Snapshot::bundle_text(Self) -> String
+pub fn Snapshot::compare_to(Self, Self) -> SnapshotComparison
 pub fn Snapshot::diff(Self, Self) -> SnapshotDiff
 pub fn Snapshot::manifest_text(Self) -> String
 pub fn Snapshot::psl_text(Self) -> String
@@ -350,6 +351,15 @@ pub(all) enum SnapshotChange {
 pub fn SnapshotChange::equal(Self, Self) -> Bool
 pub fn SnapshotChange::not_equal(Self, Self) -> Bool
 pub fn SnapshotChange::to_repr(Self) -> @debug.Repr
+
+pub struct SnapshotComparison {
+  older_ : Snapshot
+  newer_ : Snapshot
+  before_list_ : SuffixList
+  after_list_ : SuffixList
+}
+pub fn SnapshotComparison::analyze_cookie_scope_impact(Self, Array[CookieScopeInput], LookupOptions) -> CookieScopeImpactReport
+pub fn SnapshotComparison::analyze_impact(Self, Array[String], LookupOptions) -> SnapshotImpact
 
 pub struct SnapshotDiff {
   from_revision_ : String

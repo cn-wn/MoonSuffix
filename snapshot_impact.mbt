@@ -135,8 +135,18 @@ pub fn Snapshot::analyze_impact(
   domains : Array[String],
   options : LookupOptions,
 ) -> SnapshotImpact {
-  let before_list = SuffixList::parse(self.psl_text_).unwrap()
-  let after_list = SuffixList::parse(newer.psl_text_).unwrap()
+  self.compare_to(newer).analyze_impact(domains, options)
+}
+
+///|
+fn analyze_impact_with_lists(
+  older : Snapshot,
+  newer : Snapshot,
+  before_list : SuffixList,
+  after_list : SuffixList,
+  domains : Array[String],
+  options : LookupOptions,
+) -> SnapshotImpact {
   let impacts : Array[DomainImpact] = []
   let mut unchanged_count = 0
   for index, domain in domains {
@@ -155,9 +165,9 @@ pub fn Snapshot::analyze_impact(
     }
   }
   {
-    from_revision_: self.source_revision_,
+    from_revision_: older.source_revision_,
     to_revision_: newer.source_revision_,
-    from_sha256_: self.sha256_,
+    from_sha256_: older.sha256_,
     to_sha256_: newer.sha256_,
     scanned_count_: domains.length(),
     unchanged_count_: unchanged_count,

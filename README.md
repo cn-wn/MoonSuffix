@@ -46,6 +46,12 @@ two pinned, complete upstream PSL revisions. `moon run cmd/main` demonstrates
 wildcards, exceptions and policy choices; `moon run examples/idna` covers
 Unicode domains.
 
+For an application checking both hostname and Cookie inventories, use
+`old_snapshot.compare_to(new_snapshot)` once, then call
+`analyze_impact` and `analyze_cookie_scope_impact` on the comparison. It
+compiles each pinned rule set once and keeps the two reports on the same
+snapshot pair and lookup policy.
+
 The [CI workflow](https://github.com/cn-wn/MoonSuffix/actions/workflows/ci.yml?query=branch%3Amain)
 checks Wasm, Wasm-GC, and JavaScript tests. It also downloads a pinned full
 upstream PSL and official conformance cases, checks their hashes, and exercises

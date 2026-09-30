@@ -374,7 +374,8 @@ fn render_audit_report(
   }
   let policy_name = if strict_icann { "strict-icann" } else { "browser" }
   let diff = old_snapshot.diff(new_snapshot)
-  let impact = old_snapshot.analyze_impact(new_snapshot, hosts, options)
+  let comparison = old_snapshot.compare_to(new_snapshot)
+  let impact = comparison.analyze_impact(hosts, options)
   let output = StringBuilder()
   output.write_string("format=moonsuffix-audit-v1\n")
   output.write_string("policy=\{policy_name}\n")
@@ -401,8 +402,8 @@ fn render_audit_report(
         Ok(value) => value
         Err(error) => return Err(error)
       }
-      let cookie_impact = old_snapshot.analyze_cookie_scope_impact(
-        new_snapshot, inputs, options,
+      let cookie_impact = comparison.analyze_cookie_scope_impact(
+        inputs, options,
       )
       cookie_changed_count = cookie_impact.changed_count()
       cookie_scanned_count = cookie_impact.scanned_count()

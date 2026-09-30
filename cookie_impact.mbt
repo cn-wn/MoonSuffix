@@ -200,8 +200,18 @@ pub fn Snapshot::analyze_cookie_scope_impact(
   inputs : Array[CookieScopeInput],
   options : LookupOptions,
 ) -> CookieScopeImpactReport {
-  let before_list = SuffixList::parse(self.psl_text_).unwrap()
-  let after_list = SuffixList::parse(newer.psl_text_).unwrap()
+  self.compare_to(newer).analyze_cookie_scope_impact(inputs, options)
+}
+
+///|
+fn analyze_cookie_scope_impact_with_lists(
+  older : Snapshot,
+  newer : Snapshot,
+  before_list : SuffixList,
+  after_list : SuffixList,
+  inputs : Array[CookieScopeInput],
+  options : LookupOptions,
+) -> CookieScopeImpactReport {
   let impacts : Array[CookieScopeImpact] = []
   let mut unchanged_count = 0
   for index, input in inputs {
@@ -228,9 +238,9 @@ pub fn Snapshot::analyze_cookie_scope_impact(
     }
   }
   {
-    from_revision_: self.source_revision_,
+    from_revision_: older.source_revision_,
     to_revision_: newer.source_revision_,
-    from_sha256_: self.sha256_,
+    from_sha256_: older.sha256_,
     to_sha256_: newer.sha256_,
     scanned_count_: inputs.length(),
     unchanged_count_: unchanged_count,
