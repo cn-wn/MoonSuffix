@@ -205,6 +205,25 @@ against [small example inventories](examples/real-update/hosts.txt). This
 deliberately fails the impact gate while verifying the expected two hostname
 changes and one Cookie-scope change; the PSL files themselves are not bundled.
 
+## Embed a pinned PSL in a MoonBit application
+
+For Wasm or JS applications without runtime file access, generate MoonBit source
+from a locally obtained PSL revision:
+
+```text
+moon run --target native cmd/embed \
+  public_suffix_list.dat embedded_psl.mbt \
+  --revision <upstream-commit-sha> --idna
+```
+
+Place `embedded_psl.mbt` in the consuming package and import `cn-wn/moonsuffix`
+as `moonsuffix`. Call `embedded_suffix_snapshot()`; it returns a verified
+snapshot, which you can parse into a `SuffixList`. The generator refuses to
+overwrite an existing output file. The generated source includes PSL-derived
+data, so applications distributing it must retain the upstream MPL-2.0 source
+and notices. CI compiles and runs a generated small example; the repository
+does not carry a copy of the full PSL.
+
 ## Audit a PSL update
 
 The native audit command compares a deployed PSL with a candidate list, then
@@ -446,7 +465,8 @@ sample”; it is not proof that a PSL rule is unnecessary.
 
 ## Roadmap
 
-1. Add a reproducible static PSL build path and benchmark lookup and startup.
+1. Continue measuring performance on representative application inventories and
+   track regressions across toolchain updates.
 
 ## Validation
 
@@ -473,6 +493,8 @@ moon check cmd/classify --target native --deny-warn
 moon test cmd/classify --target native --deny-warn
 moon check cmd/bench --target native --deny-warn
 moon test cmd/bench --target native --deny-warn
+moon check cmd/embed --target native --deny-warn
+moon test cmd/embed --target native --deny-warn
 ```
 
 See [DESIGN.md](DESIGN.md), [ECOSYSTEM.md](ECOSYSTEM.md), and

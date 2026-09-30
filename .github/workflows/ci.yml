@@ -107,6 +107,25 @@ jobs:
       - name: Test native benchmark command
         run: moon test cmd/bench --target native --deny-warn
 
+      - name: Check native embedded-source generator
+        run: moon check cmd/embed --target native --deny-warn
+
+      - name: Test native embedded-source generator
+        run: moon test cmd/embed --target native --deny-warn
+
+      - name: Compile and run generated MoonBit source
+        run: |
+          mkdir -p examples/embed-smoke
+          printf 'import { "cn-wn/moonsuffix", }\n\npkgtype(kind: "executable")\n' \
+            > examples/embed-smoke/moon.pkg
+          printf 'fn main {\n  let snapshot = embedded_suffix_snapshot().unwrap()\n  let list = @moonsuffix.SuffixList::parse(snapshot.psl_text()).unwrap()\n  assert_eq(list.registrable_domain("www.example.com").unwrap(), Some("example.com"))\n}\n' \
+            > examples/embed-smoke/main.mbt
+          moon run --target native cmd/embed \
+            examples/conformance/rules.psl examples/embed-smoke/embedded.mbt \
+            --revision synthetic-fixture
+          moon check examples/embed-smoke --target wasm --deny-warn
+          moon run --target wasm examples/embed-smoke
+
       - name: Run synthetic PSL conformance cases
         run: |
           moon run --target native cmd/conformance \

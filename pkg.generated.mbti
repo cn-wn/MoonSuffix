@@ -339,6 +339,7 @@ pub fn Snapshot::restore_bundle_text(String) -> Result[Self, SnapshotLoadError]
 pub fn Snapshot::rule_count(Self) -> Int
 pub fn Snapshot::sha256(Self) -> String
 pub fn Snapshot::source_revision(Self) -> String
+pub fn Snapshot::to_moonbit_source(Self) -> String
 
 pub(all) enum SnapshotChange {
   AddedRule(String, RuleSection)
